@@ -1,0 +1,10 @@
+# https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md
+# os:
+  # edit: "nvim {{filename}}"
+
+  # editAtLine: "nvim {{filename}} +{{line}}"
+
+  # open: "nvim {{filename}}"
+gui:
+  commit:
+    template: ~/.angular_commit_template.txt

@@ -4,11 +4,11 @@ tap "homebrew/cask-fonts"
 
 # Programming Languages and Tools
 brew "python@3.12"                    # Interpreted, interactive, object-oriented programming language (specific version)
-brew "go"                             # Open source programming language to build simple/reliable/efficient software
+#brew "go"                             # Open source programming language to build simple/reliable/efficient software
 brew "lua"                            # Powerful, lightweight programming language
 brew "luajit"                         # Just-In-Time Compiler (JIT) for the Lua programming language
-brew "gradle"                         # Open-source build automation tool based on the Groovy and Kotlin DSL
-brew "openjdk@17"                     # Development kit for the Java programming language
+#brew "gradle"                         # Open-source build automation tool based on the Groovy and Kotlin DSL
+#brew "openjdk@17"                     # Development kit for the Java programming language
 brew "pipenv"                         # Python dependency management tool
 brew "pyenv"                          # Python version management
 brew "virtualenv", link: false        # Tool for creating isolated virtual python environments
@@ -27,19 +27,20 @@ brew "gh"                             # GitHub command-line tool
 brew "fish"                           # User-friendly command-line shell for UNIX-like operating systems
 brew "zsh"                            # UNIX shell (command interpreter)
 brew "zsh-completions"                # Additional completion definitions for zsh
-brew "tmux"                           # Terminal multiplexer
-brew "tmuxinator"                     # Manage complex tmux sessions easily
 brew "glances"                        # Alternative to top/htop
 brew "picocom"                        # Minimal dumb-terminal emulation program
 
 # Terminal Utils
 brew "eza"                            # Modern, maintained replacement for ls
+brew "bat"                            # Cat but with wings
 brew "fd"                             # Simple, fast and user-friendly alternative to find
+brew "fzf"
 brew "tree"                           # Display directories as trees (with optional color/HTML output)
 brew "wget"                           # Internet file retriever
-brew "ripgrep"                        # Search tool like grep and The Silver Searcher
+brew "ripgrep"                        # Search tool like grep and The Silver Searcher - required for nvim
 brew "jq"                             # Lightweight and flexible command-line JSON processor
 brew "stow"                           # Organize software neatly under a single directory tree (e.g. /usr/local)
+brew "cheat"
 
 # System Utilities
 brew "coreutils"                      # GNU File, Shell, and Text utilities
@@ -63,6 +64,7 @@ cask "devtoys"                        # Utilities designed to make common develo
 cask "font-hack-nerd-font"            # Nerd Font: Hack
 cask "mactex"                         # Full TeX Live distribution with GUI applications
 cask "warp"                           # Rust-based terminal
+cask "kitty"
 
 # Hashicorp
 tap "hashicorp/tap"
