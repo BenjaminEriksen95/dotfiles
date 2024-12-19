@@ -2,11 +2,14 @@ if status is-interactive
     # Commands to run in interactive sessions can go here
 end
 
+set -gx PATH /opt/homebrew/bin $PATH
+
 set EDITOR nvim
 
 alias python="python3"
 
 set -gx PATH $HOME/.pyenv/bin $PATH
+
 pyenv init - | source
 
 
@@ -20,3 +23,6 @@ set -gx PATH /opt/homebrew/opt/coreutils/libexec/gnubin/ $PATH
 alias date='gdate'
 
 set -x XDG_CONFIG_HOME $HOME/.config
+
+set config_dir (dirname (status --current-filename))
+source $config_dir/kubectl.fish

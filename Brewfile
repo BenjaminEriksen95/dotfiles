@@ -39,8 +39,7 @@ brew "tree"                           # Display directories as trees (with optio
 brew "wget"                           # Internet file retriever
 brew "ripgrep"                        # Search tool like grep and The Silver Searcher - required for nvim
 brew "jq"                             # Lightweight and flexible command-line JSON processor
-brew "stow"                           # Organize software neatly under a single directory tree (e.g. /usr/local)
-brew "cheat"
+brew "cheat"                          # Great tool for figuring out common use cases for CLI tools
 
 # System Utilities
 brew "coreutils"                      # GNU File, Shell, and Text utilities
@@ -63,7 +62,6 @@ cask "amethyst"                       # Automatic tiling window manager similar 
 cask "devtoys"                        # Utilities designed to make common development tasks easier
 cask "font-hack-nerd-font"            # Nerd Font: Hack
 cask "mactex"                         # Full TeX Live distribution with GUI applications
-cask "warp"                           # Rust-based terminal
 cask "kitty"
 
 # Hashicorp
