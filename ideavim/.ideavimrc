@@ -1,0 +1,130 @@
+let mapleader=" "
+
+" Vim settings
+set scrolloff=8              " Keeps a margin of 8 lines above and below the cursor
+set showcmd                  " Show the command being typed in the status line
+set showmode                 " Show current mode (insert, normal, etc.)
+set number relativenumber    " Show line numbers and relative line numbers
+set smartindent              " Smart indentation (especially for C-like languages)
+set hlsearch                 " Highlight search results
+set incsearch                " Enable incremental search
+set inccommand=split         " Show live search results in a split window
+
+" Disable swap files and backups
+set noswapfile
+set nobackup
+
+" Map <Esc> to clear search highlights
+nnoremap <Esc> :nohlsearch<CR>
+
+""" Indentation Settings
+" Indentation settings
+set tabstop=4                " Number of spaces a tab represents
+set softtabstop=4            " Number of spaces for the Tab key to insert in insert mode
+set shiftwidth=4             " Number of spaces for each level of indentation
+set expandtab                " Use spaces instead of tabs
+set smartindent              " Automatically indent new lines in certain situations
+set ideajoin
+
+""" Key Mappings
+" Toggle Distraction Free Mode
+nnoremap <c-z> :action ToggleDistractionFreeMode<CR>
+
+" Move marking Up/Down in visual mode
+vnoremap J :m '>+1<CR>gv=gv
+vnoremap K :m '<-2<CR>gv=gv
+
+" Center cursor when moving through search results
+nnoremap n nzzzv
+nnoremap N Nzzzv
+
+" Paste without yanking the selection
+xnoremap <leader>p "_dP
+
+" Normal mode: yank the current line to the system clipboard
+nnoremap <leader>y "+y
+
+" Visual mode: yank the selected text to the system clipboard
+vnoremap <leader>y "+y
+
+nnoremap <leader>w :set wrap!<bar>set linebreak!<bar>set nolist!<CR>
+
+""" Harpoon Configurations
+" Harpoon key mappings for setting and going to marks
+nmap <leader><C-h> :action SetHarpoon1<CR>
+nmap <leader><C-j> :action SetHarpoon2<CR>
+nmap <leader><C-k> :action SetHarpoon3<CR>
+nmap <leader><C-l> :action SetHarpoon4<CR>
+
+" Harpoon key mappings for jumping to marks
+nmap <C-h> :action GotoHarpoon1<CR>
+nmap <C-j> :action GotoHarpoon2<CR>
+nmap <C-k> :action GotoHarpoon3<CR>
+nmap <C-l> :action GotoHarpoon4<CR>
+
+" Show Harpoon and add to Harpoon
+nmap <C-e> :action ShowHarpoon<CR>
+nmap <leader>a :action AddToHarpoon<CR>
+
+""" Plugins
+" Plugin configuration
+Plug 'tpope/vim-commentary'        " Commenting plugin
+Plug 'tpope/vim-surround'          " Surround text with delimiters
+" Plug 'preservim/nerdtree'          " File explorer
+" Plug 'justinmk/vim-sneak'          " Easy motion for jumping to any character
+" Plug 'smoka7/hop.nvim'
+
+" require 'hop'.setup({})
+" Plug 'https://github.com/terryma/vim-multiple-cursors'  " Uncomment if you want multiple cursor support
+
+
+""" Terminal and Tools
+" Terminal tool window mapping
+nmap <leader>t :action ActivateTerminalToolWindow<CR>
+
+""" Debugging
+nmap <leader>b :action ToggleLineBreakpoint<CR>
+
+
+nnoremap <C-p> :action QuickImplementations<CR>
+map <leader>rr :action FindUsages<CR>
+
+nmap gD :action Macro.pleasework<CR>
+
+nmap <leader>rn :action RenameElement<CR>
+nmap <leader>rs :action ChangeSignature<CR>
+
+" " Press `f` to activate AceJump
+" map f :action AceAction<CR>
+" " Press `F` to activate Target Mode
+" map F :action AceTargetAction<CR>
+" " Press `g` to activate Line Mode
+" map g :action AceLineAction<CR>
+
+nmap æ _
+nmap ø $
+vmap æ _
+vmap ø $
+omap æ _
+omap ø $
+
+vmap <leader>ev :Action IntroduceVariable<CR>
+vmap <leader>ef :Action IntroduceField<CR>
+vmap <leader>em :Action ExtractMethod<CR>
+
+nmap <leader>ev :Action IntroduceVariable<CR>
+nmap <leader>ef :Action IntroduceField<CR>
+nmap <leader>em :Action ExtractMethod<CR>
+
+imap <C-x> :action QuickJavaDoc<CR>
+
+nmap <leader>r :action ChooseRunConfiguration<CR>
+
+nmap <leader>d :action ChooseDebugConfiguration<CR>
+nmap <leader>c :action Stop<CR>
+
+nmap <leader><leader> :action RunAnything<CR>
+
+nmap <leader>cr :action ..<CR>
+
+

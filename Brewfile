@@ -1,22 +1,27 @@
 # Homebrew Taps
 tap "homebrew/bundle"
-tap "homebrew/cask-fonts"
 
-# Programming Languages and Tools
-brew "python@3.12"                    # Interpreted, interactive, object-oriented programming language (specific version)
-#brew "go"                             # Open source programming language to build simple/reliable/efficient software
-brew "lua"                            # Powerful, lightweight programming language
-brew "luajit"                         # Just-In-Time Compiler (JIT) for the Lua programming language
-#brew "gradle"                         # Open-source build automation tool based on the Groovy and Kotlin DSL
-#brew "openjdk@17"                     # Development kit for the Java programming language
-brew "pipenv"                         # Python dependency management tool
-brew "pyenv"                          # Python version management
-brew "virtualenv", link: false        # Tool for creating isolated virtual python environments
+# Fonts and GUI Applications (Casks)
+cask "devtoys"                        # Utilities designed to make common development tasks easier
+cask "font-hack-nerd-font"            # Nerd Font: Hack
+cask "mactex"                         # Full TeX Live distribution with GUI applications
+cask "kitty"
+cask "amphetamine"
+cask "raycast"
 
 # Editors and Development Tools
 brew "neovim"                         # Ambitious Vim-fork focused on extensibility and agility
 brew "code-minimap"                   # High performance code minimap generator
 brew "stow"                           # Organize software neatly under a single directory tree (e.g. /usr/local)
+
+# Programming Languages and Tools
+brew "python@3.12"                    # Interpreted, interactive, object-oriented programming language (specific version)
+brew "go"                             # Open source programming language to build simple/reliable/efficient software
+brew "lua"                            # Powerful, lightweight programming language
+brew "luajit"                         # Just-In-Time Compiler (JIT) for the Lua programming language
+brew "pipenv"                         # Python dependency management tool
+brew "pyenv"                          # Python version management
+brew "virtualenv", link: false        # Tool for creating isolated virtual python environments
 
 # Version Control and Development Utilities
 brew "git"                            # Distributed revision control system
@@ -50,21 +55,14 @@ brew "graphviz"                       # Graph visualization software from AT&T a
 brew "docker"                         # Pack, ship and run any application as a lightweight container
 brew "docker-compose"                 # Isolated development environments using Docker
 brew "kubeseal"                       # Kubernetes controller and tool for one-way encrypted Secrets
-brew "minikube"                       # Run a Kubernetes cluster locally
+# brew "minikube"                       # Run a Kubernetes cluster locally
 
 # Compression and File Formats
 brew "zstd"                           # Zstandard is a real-time compression algorithm
 brew "libtiff"                        # TIFF library and utilities
 brew "little-cms2"                    # Color management engine supporting ICC profiles
 
-# Fonts and GUI Applications (Casks)
-cask "amethyst"                       # Automatic tiling window manager similar to xmonad
-cask "devtoys"                        # Utilities designed to make common development tasks easier
-cask "font-hack-nerd-font"            # Nerd Font: Hack
-cask "mactex"                         # Full TeX Live distribution with GUI applications
-cask "kitty"
-
 # Hashicorp
-tap "hashicorp/tap"
-brew "hashicorp/tap/terraform"        # Terraform
-brew "tfsec"                          # Static analysis security scanner for your terraform code
+# tap "hashicorp/tap"
+# brew "hashicorp/tap/terraform"        # Terraform
+# brew "tfsec"                          # Static analysis security scanner for your terraform code

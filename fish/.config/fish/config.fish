@@ -12,6 +12,8 @@ set -gx PATH $HOME/.pyenv/bin $PATH
 
 pyenv init - | source
 
+export JAVA_HOME="/Users/benjamin/Library/Java/JavaVirtualMachines/temurin-21.0.5/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
 
 # Solves pylint cannot find project packages
 if not contains . $PYTHONPATH
@@ -24,5 +26,7 @@ alias date='gdate'
 
 set -x XDG_CONFIG_HOME $HOME/.config
 
+
 set config_dir (dirname (status --current-filename))
-source $config_dir/kubectl.fish
+
+source /opt/homebrew/opt/asdf/libexec/asdf.fish
