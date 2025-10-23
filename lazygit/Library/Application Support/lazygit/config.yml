@@ -1,10 +1,12 @@
 # https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md
-# os:
+os:
   # edit: "nvim {{filename}}"
 
   # editAtLine: "nvim {{filename}} +{{line}}"
 
-  # open: "nvim {{filename}}"
+  open: zsh -c 'nvim {{filename}}'
 gui:
+  switchTabsWithPanelJumpKeys: true
   commit:
     template: ~/.angular_commit_template.txt
+

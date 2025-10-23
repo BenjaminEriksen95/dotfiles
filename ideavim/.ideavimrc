@@ -25,6 +25,9 @@ set shiftwidth=4             " Number of spaces for each level of indentation
 set expandtab                " Use spaces instead of tabs
 set smartindent              " Automatically indent new lines in certain situations
 set ideajoin
+set which-key
+
+set notimeout
 
 """ Key Mappings
 " Toggle Distraction Free Mode
@@ -118,13 +121,13 @@ nmap <leader>em :Action ExtractMethod<CR>
 
 imap <C-x> :action QuickJavaDoc<CR>
 
-nmap <leader>r :action ChooseRunConfiguration<CR>
+nmap <leader>R :action ChooseRunConfiguration<CR>
 
 nmap <leader>d :action ChooseDebugConfiguration<CR>
 nmap <leader>c :action Stop<CR>
 
 nmap <leader><leader> :action RunAnything<CR>
 
-nmap <leader>cr :action ..<CR>
+" nmap <leader>cr :action ..<CR>
 
-
+nmap <leader>z :action ChangeIdeScale<CR>
