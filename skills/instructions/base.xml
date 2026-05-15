@@ -308,7 +308,7 @@ Do not propose a branch name or create bd tasks manually — the bootstrap agent
 </workflow>
 </section>
 
-  <section name="jira-workflow" platform="claude">
+  <section name="jira-workflow" platform="claude" disabled="true">
 ---
 
 ## Jira Task Workflow (Default)
@@ -368,7 +368,7 @@ Do not manually create PRs or close bd tasks — the wrap-up agent handles it.
 </workflow>
 </section>
 
-  <section name="task-wrapup" platform="claude">
+  <section name="task-wrapup" platform="claude" disabled="true">
 ---
 
 ## Task Wrap-Up Workflow
@@ -715,7 +715,7 @@ A `think` agent exists at `~/.claude/agents/think.md` for deep strategic reasoni
 
 <trigger>
 
-**When to invoke it:** When the user says "think about X", asks for strategic analysis, wants tradeoffs evaluated, or needs a hypothesis challenged — especially in the algo-trader context.
+**When to invoke it:** When the user says "think about X", asks for strategic analysis, wants tradeoffs evaluated, or needs a hypothesis challenged.
 
 </trigger>
 
