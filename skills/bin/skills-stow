@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# skills-stow — stow all source repos into copilot + claude targets (idempotent)
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../lib/common.sh
+source "$SCRIPT_DIR/../lib/common.sh"
+
+require_stow
+
+# Pre-flight conflict check
+log "Running conflict check..."
+if ! "$SCRIPT_DIR/skills-check"; then
+  err "Aborting stow due to conflicts."
+  exit 1
+fi
+
+stow_pkg() {
+  local pkg="$1" src="$2" target="$3"; shift 3
+  local extra=("$@")
+  mkdir -p "$target"
+  log "  stow $pkg  →  $target"
+  stow --restow "${extra[@]}" -d "$src" -t "$target" "$pkg"
+}
+
+# Process each source
+while IFS= read -r src; do
+  validate_source "$src" || continue
+  log "Processing source: $src"
+
+  # shared → both tools (exclude INDEX.md and README.md for claude to avoid
+  # clobbering Claude-managed files that may exist at that level)
+  if [[ -d "$src/shared" ]]; then
+    stow_pkg shared "$src" "$COPILOT_TARGET"
+    stow_pkg shared "$src" "$CLAUDE_TARGET" \
+      --ignore='INDEX\.md' --ignore='README\.md'
+  fi
+
+  # copilot-specific subtree
+  if [[ -d "$src/copilot" ]]; then
+    stow_pkg copilot "$src" "$COPILOT_TARGET"
+  fi
+
+  # claude-specific subtree
+  if [[ -d "$src/claude" ]]; then
+    stow_pkg claude "$src" "$CLAUDE_TARGET"
+  fi
+done < <(read_sources)
+
+echo ""
+log "Done. Symlink spot-check:"
+for skill in tagify skill-builder; do
+  printf "  ~/.copilot/skills/%-25s → %s\n" "$skill" \
+    "$(readlink "$COPILOT_TARGET/skills/$skill" 2>/dev/null || echo '(not a symlink)')"
+  printf "  ~/.claude/skills/%-25s  → %s\n" "$skill" \
+    "$(readlink "$CLAUDE_TARGET/skills/$skill" 2>/dev/null || echo '(not a symlink)')"
+done

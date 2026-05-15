@@ -1,0 +1,3 @@
+# Skill source repos — one per line. ~ expands to $HOME.
+# Each source should have a top-level `shared/`, `copilot/`, and/or `claude/` package.
+~/git/personal/skills

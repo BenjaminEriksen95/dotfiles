@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+# skills-adopt — backport a tool-installed skill into a source repo, then restow.
+#
+# Usage:
+#   skills-adopt <skill-name> \
+#     [--from copilot|claude|both] \
+#     [--to <source-path>]         \
+#     [--scope shared|copilot|claude] \
+#     [--dry-run]
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../lib/common.sh
+source "$SCRIPT_DIR/../lib/common.sh"
+
+# ---------------------------------------------------------------------------
+# Defaults
+# ---------------------------------------------------------------------------
+SKILL_NAME=""
+FROM="both"
+TO=""
+SCOPE="shared"
+DRY_RUN=0
+
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --from)   FROM="$2";  shift 2 ;;
+    --to)     TO="$2";    shift 2 ;;
+    --scope)  SCOPE="$2"; shift 2 ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    -*)
+      err "Unknown option: $1"
+      echo "Usage: skills-adopt <skill-name> [--from copilot|claude|both] [--to <source-path>] [--scope shared|copilot|claude] [--dry-run]"
+      exit 1
+      ;;
+    *)
+      if [[ -z "$SKILL_NAME" ]]; then
+        SKILL_NAME="$1"
+      else
+        err "Unexpected argument: $1"
+        exit 1
+      fi
+      shift ;;
+  esac
+done
+
+if [[ -z "$SKILL_NAME" ]]; then
+  err "skill-name is required."
+  echo "Usage: skills-adopt <skill-name> [--from copilot|claude|both] [--to <source-path>] [--scope shared|copilot|claude] [--dry-run]"
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Resolve --to (default: first source in sources file)
+# ---------------------------------------------------------------------------
+if [[ -z "$TO" ]]; then
+  TO="$(read_sources | head -1)"
+  if [[ -z "$TO" ]]; then
+    err "No sources configured. Add a path to $(expand_path "~/dotfiles/skills/sources")."
+    exit 1
+  fi
+fi
+TO="$(expand_path "$TO")"
+
+# ---------------------------------------------------------------------------
+# Validate scope
+# ---------------------------------------------------------------------------
+case "$SCOPE" in
+  shared|copilot|claude) ;;
+  *)
+    err "--scope must be one of: shared, copilot, claude"
+    exit 1
+    ;;
+esac
+
+# ---------------------------------------------------------------------------
+# Find the real (non-symlink) skill directory in the target(s)
+# ---------------------------------------------------------------------------
+find_real_skill() {
+  local name="$1"
+  local results=()
+  if [[ "$FROM" == "copilot" || "$FROM" == "both" ]]; then
+    local p="$COPILOT_TARGET/skills/$name"
+    if [[ -d "$p" && ! -L "$p" ]]; then
+      results+=("$p")
+    fi
+  fi
+  if [[ "$FROM" == "claude" || "$FROM" == "both" ]]; then
+    local p="$CLAUDE_TARGET/skills/$name"
+    if [[ -d "$p" && ! -L "$p" ]]; then
+      results+=("$p")
+    fi
+  fi
+  printf '%s\n' "${results[@]}"
+}
+
+mapfile -t found_dirs < <(find_real_skill "$SKILL_NAME")
+
+if [[ ${#found_dirs[@]} -eq 0 ]]; then
+  err "No real (non-symlink) '$SKILL_NAME' directory found in target(s)."
+  err "  Searched: $(
+    [[ "$FROM" == "copilot" || "$FROM" == "both" ]] && echo "$COPILOT_TARGET/skills/$SKILL_NAME "
+    [[ "$FROM" == "claude"  || "$FROM" == "both" ]] && echo "$CLAUDE_TARGET/skills/$SKILL_NAME"
+  )"
+  exit 1
+fi
+
+SOURCE_DIR="${found_dirs[0]}"
+if [[ ${#found_dirs[@]} -gt 1 ]]; then
+  warn "Found in multiple targets; using first: $SOURCE_DIR"
+fi
+
+# ---------------------------------------------------------------------------
+# Refuse to clobber if skill already exists in any source
+# ---------------------------------------------------------------------------
+while IFS= read -r src; do
+  validate_source "$src" 2>/dev/null || continue
+  for pkg in shared copilot claude; do
+    local_skill="$src/$pkg/skills/$SKILL_NAME"
+    if [[ -d "$local_skill" ]]; then
+      err "Skill '$SKILL_NAME' already exists in source: $local_skill"
+      err "Refusing to clobber. Remove it first if you really want to replace it."
+      exit 1
+    fi
+  done
+done < <(read_sources)
+
+# ---------------------------------------------------------------------------
+# Determine destination
+# ---------------------------------------------------------------------------
+DEST_DIR="$TO/$SCOPE/skills/$SKILL_NAME"
+
+echo ""
+log "=== skills-adopt: $SKILL_NAME ==="
+echo "  Source (real dir)  : $SOURCE_DIR"
+echo "  Destination        : $DEST_DIR"
+echo "  Scope package      : $SCOPE"
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo ""
+  log "[DRY-RUN] Would move:"
+  echo "  mv '$SOURCE_DIR' '$DEST_DIR'"
+  log "[DRY-RUN] Would then run: skills-stow"
+  log "[DRY-RUN] Suggested commit:"
+  echo "  cd '$TO' && git add -A && git commit -m 'adopt: move $SKILL_NAME from tool-installed to $SCOPE/skills/'"
+  echo ""
+  log "No changes made (--dry-run)."
+  exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Perform the move
+# ---------------------------------------------------------------------------
+mkdir -p "$(dirname "$DEST_DIR")"
+
+# Use git mv if the destination is a git repo (cleaner history)
+if git -C "$TO" rev-parse --is-inside-work-tree &>/dev/null; then
+  log "Moving via git mv (destination is a git repo)..."
+  git -C "$TO" mv --force "$SOURCE_DIR" "$DEST_DIR" 2>/dev/null || mv "$SOURCE_DIR" "$DEST_DIR"
+else
+  mv "$SOURCE_DIR" "$DEST_DIR"
+fi
+
+# ---------------------------------------------------------------------------
+# Restow and verify
+# ---------------------------------------------------------------------------
+log "Running skills-stow to recreate symlinks..."
+"$SCRIPT_DIR/skills-stow"
+
+# Verify the symlink resolves to the new location
+for t in "$COPILOT_TARGET/skills/$SKILL_NAME" "$CLAUDE_TARGET/skills/$SKILL_NAME"; do
+  if [[ -L "$t" ]]; then
+    resolved="$(readlink "$t")"
+    log "Verified symlink: $t → $resolved"
+  fi
+done
+
+echo ""
+log "=== Adoption complete ==="
+echo ""
+echo "  Suggested next step:"
+echo "  cd '$TO' && git add -A && git commit -m 'adopt: move $SKILL_NAME from tool-installed to $SCOPE/skills/'"

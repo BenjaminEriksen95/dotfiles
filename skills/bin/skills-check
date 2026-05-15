@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# skills-check — cross-source + cross-target conflict scanner (no side effects)
+# Exits 0 if clean, non-zero on any conflict.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../lib/common.sh
+source "$SCRIPT_DIR/../lib/common.sh"
+
+conflicts=0
+
+# Collect all skills per tool-target from all sources, detect cross-source dupes.
+# skill_seen[target:name] = "source_path"
+declare -A skill_seen
+
+check_cross_source_dupes() {
+  local src="$1"
+  # shared → both targets
+  for target_key in copilot claude; do
+    local skills_dir="$src/shared/skills"
+    [[ -d "$skills_dir" ]] || continue
+    for skill_path in "$skills_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      local key="$target_key:$name"
+      if [[ -n "${skill_seen[$key]+_}" ]]; then
+        err "Cross-source duplicate [$target_key]: skill '$name' in both '${skill_seen[$key]}' and '$src'"
+        conflicts=$((conflicts + 1))
+      else
+        skill_seen[$key]="$src"
+      fi
+    done
+  done
+
+  # copilot-specific
+  local copilot_dir="$src/copilot/skills"
+  if [[ -d "$copilot_dir" ]]; then
+    for skill_path in "$copilot_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      local key="copilot:$name"
+      if [[ -n "${skill_seen[$key]+_}" ]]; then
+        err "Cross-source duplicate [copilot]: skill '$name' in both '${skill_seen[$key]}' and '$src'"
+        conflicts=$((conflicts + 1))
+      else
+        skill_seen[$key]="$src"
+      fi
+    done
+  fi
+
+  # claude-specific
+  local claude_dir="$src/claude/skills"
+  if [[ -d "$claude_dir" ]]; then
+    for skill_path in "$claude_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      local key="claude:$name"
+      if [[ -n "${skill_seen[$key]+_}" ]]; then
+        err "Cross-source duplicate [claude]: skill '$name' in both '${skill_seen[$key]}' and '$src'"
+        conflicts=$((conflicts + 1))
+      else
+        skill_seen[$key]="$src"
+      fi
+    done
+  fi
+}
+
+check_target_collisions() {
+  local src="$1"
+  local skills_dir target existing
+
+  # shared → both targets
+  skills_dir="$src/shared/skills"
+  if [[ -d "$skills_dir" ]]; then
+    for skill_path in "$skills_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      for target in "$COPILOT_TARGET/skills" "$CLAUDE_TARGET/skills"; do
+        existing="$target/$name"
+        if [[ -e "$existing" && ! -L "$existing" ]]; then
+          err "Target collision: '$existing' is a real directory (not a symlink); would block stow of '$name' from '$src'"
+          conflicts=$((conflicts + 1))
+        fi
+      done
+    done
+  fi
+
+  # copilot-specific
+  skills_dir="$src/copilot/skills"
+  if [[ -d "$skills_dir" ]]; then
+    for skill_path in "$skills_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      existing="$COPILOT_TARGET/skills/$name"
+      if [[ -e "$existing" && ! -L "$existing" ]]; then
+        err "Target collision [copilot]: '$existing' is a real directory; would block stow of '$name' from '$src'"
+        conflicts=$((conflicts + 1))
+      fi
+    done
+  fi
+
+  # claude-specific
+  skills_dir="$src/claude/skills"
+  if [[ -d "$skills_dir" ]]; then
+    for skill_path in "$skills_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      existing="$CLAUDE_TARGET/skills/$name"
+      if [[ -e "$existing" && ! -L "$existing" ]]; then
+        err "Target collision [claude]: '$existing' is a real directory; would block stow of '$name' from '$src'"
+        conflicts=$((conflicts + 1))
+      fi
+    done
+  fi
+}
+
+# Run checks across all sources
+while IFS= read -r src; do
+  validate_source "$src" || continue
+  check_cross_source_dupes "$src"
+  check_target_collisions "$src"
+done < <(read_sources)
+
+if [[ "$conflicts" -eq 0 ]]; then
+  log "skills-check: OK — no conflicts."
+  exit 0
+else
+  echo "" >&2
+  err "$conflicts conflict(s) found. Resolve by:"
+  err "  - renaming conflicting skill in one source, or"
+  err "  - moving the real target dir aside (e.g. mv <dir> <dir>.bak), or"
+  err "  - using skills-adopt to absorb tool-managed skills into a source"
+  exit 1
+fi
