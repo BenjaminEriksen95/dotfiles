@@ -61,6 +61,9 @@ def _load_xml(path: Path) -> dict:
         body  = m.group(3)
         platform = attrs.get("platform", "all")
         name     = attrs.get("name", "")
+        disabled = attrs.get("disabled", "false").lower() in ("true", "1", "yes")
+        if disabled:
+            continue
         entry = {"platform": platform, "name": name,
                  "text": body, "source": str(path)}
 
