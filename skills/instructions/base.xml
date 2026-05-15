@@ -173,7 +173,7 @@ Before making assumptions about frameworks, DI patterns, architecture, or toolin
 </context>
 </section>
 
-  <section name="git-multi-account" platform="copilot">
+  <section name="git-multi-account" platform="all">
 <context name="git-multi-account">
 
 ## Git & SSH Multi-Account Setup
@@ -187,38 +187,8 @@ Two GitHub accounts are configured with separate SSH keys and a `~/.gitconfig` `
 
 <rules>
 
-**Rules when working with git:**
-- Personal repos live in `~/git/personal/` or `~/dotfiles/` — email and SSH key applied automatically via `~/.gitconfig-personal`
-- Work repos live in `~/git/` (anything not under `personal/`) — work identity is the default in `~/.gitconfig`
-- Worktrees for work repos live in `~/git/worktrees/` — all currently belong to `components` (`festina-life/components`)
-- Always use the SSH alias in remote URLs — **never** bare `git@github.com:`
-  - Personal: `git@github.com-personal:BenjaminEriksen95/<repo>.git`
-  - Work: `git@github.com-work:festina-life/<repo>.git`
-- When cloning a personal repo, clone into `~/git/personal/` using the personal alias
-- When cloning a work repo, clone into `~/git/` using the work alias
-- Use `gh auth switch --user BenjaminEriksen95` before `gh` commands on personal repos
-- Use `gh auth switch --user be_festina` before `gh` commands on work repos
-
-</rules>
-
-</context>
-</section>
-
-  <section name="git-multi-account" platform="claude">
-<context name="git-multi-account">
-
-## Git & SSH Multi-Account Setup
-
-Two GitHub accounts are configured with separate SSH keys and a `~/.gitconfig` `includeIf` setup:
-
-| Account | SSH Alias | Key | Email | Scope |
-|---|---|---|---|---|
-| `BenjaminEriksen95` (personal) | `github.com-personal` | `~/.ssh/id_ed25519` | `Benja.e95@gmail.com` | `~/git/personal/`, `~/dotfiles/` |
-| `be_festina` (work) | `github.com-work` | `~/.ssh/id_work` | `be@festinafinance.com` | `~/git/` (everything else) |
-
-<rules>
-
-- Personal repos live in `~/git/personal/` or `~/dotfiles/` — email and SSH key applied automatically via `~/.gitconfig-personal`
+<fork platform="copilot">**Rules when working with git:**
+</fork>- Personal repos live in `~/git/personal/` or `~/dotfiles/` — email and SSH key applied automatically via `~/.gitconfig-personal`
 - Work repos live in `~/git/` (anything not under `personal/`) — work identity is the default in `~/.gitconfig`
 - Worktrees for work repos live in `~/git/worktrees/` — all currently belong to `components` (`festina-life/components`)
 - Always use the SSH alias in remote URLs — **never** bare `git@github.com:`
@@ -422,7 +392,7 @@ Do not manually create PRs or close bd tasks — the wrap-up agent handles it.
 </workflow>
 </section>
 
-  <section name="bd-discovery" platform="copilot">
+  <section name="bd-discovery" platform="all">
 ---
 
 ## Task Discovery with `bd` (Beads)
@@ -445,39 +415,7 @@ bd prime              # AI-optimised full context dump
 - **`bd ready`** is the default entry point — it shows only tasks whose dependencies are resolved.
 - Use `bd prime` at the start of a session to get a structured overview of all active work.
 - **Before starting a task**, claim it: `bd update <id> --claim` — atomically sets assignee + in_progress.
-- **When a task is done**, close it: `bd close <id>` — but use judgement; some tasks (e.g. epics, parent tasks) are better closed once the broader work lands (PR merged, branch deployed).
-- In work repos, epics link to Jira via `--external-ref jira-AP-XXXX` — check Jira for acceptance criteria and context.
-- In personal repos, beads titles are the source of truth.
-
-</rules>
-
-</workflow>
-</section>
-
-  <section name="bd-discovery" platform="claude">
----
-
-## Task Discovery with `bd` (Beads)
-
-<workflow name="bd-discovery">
-
-Always check bd when beginning any work session or when handed a ticket:
-
-```bash
-bd ready              # unblocked tasks — start here
-bd list               # all open issues
-bd list --priority 1  # high-priority only
-bd show <id>          # task details + audit trail
-bd epic status        # epic completion overview
-bd prime              # AI-optimised full context dump
-```
-
-<rules>
-
-- **`bd ready`** is the default entry point — it shows only tasks whose dependencies are resolved.
-- Use `bd prime` at the start of a session to get a structured overview of all active work.
-- **Before starting a task**, claim it: `bd update <id> --claim` — atomically sets assignee + in_progress.
-- **When a task is done**, close it: `bd close <id>` — but use judgement; epics close when PR merges.
+- **When a task is done**, close it: `bd close <id>` — but use judgement; <fork platform="copilot">some tasks (e.g. epics, parent tasks) are better closed once the broader work lands (PR merged, branch deployed)</fork><fork platform="claude">epics close when PR merges</fork>.
 - In work repos, epics link to Jira via `--external-ref jira-AP-XXXX` — check Jira for acceptance criteria and context.
 - In personal repos, beads titles are the source of truth.
 
