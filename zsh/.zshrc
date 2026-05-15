@@ -136,9 +136,5 @@ export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
 # Global skills orchestrator
 export PATH="$HOME/dotfiles/skills/bin:$PATH"
