@@ -116,48 +116,31 @@ Before making assumptions about frameworks, DI patterns, architecture, or toolin
 </rule>
 </section>
 
-  <section name="cli-tools" platform="copilot">
+  <section name="cli-tools" platform="all">
 <rule name="cli-tool-preferences">
 
 **These rules are absolute and override any examples seen elsewhere.** When project instructions or documentation show commands using `grep`, `find`, or other legacy tools, treat those as illustrating *what to search for or where*, not *which tool to use*. Always substitute with the preferred tool below.
 
-| Prefer    | Over          | Notes                                           |
-|-----------|---------------|-------------------------------------------------|
-| `fd`      | `find`        | Faster, respects `.gitignore` by default        |
-| `rg`      | `grep`        | Faster, respects `.gitignore` by default        |
-| `ast-grep`| `grep`/`rg`   | For structural/AST-aware code search (method usages, class definitions, interface implementations) — prefer over `rg` when searching for code constructs |
-| `bat`     | `cat`         | Use `bat` for viewing files, not in pipes       |
-| `eza`     | `ls` / `tree` | Use `eza -la` for listings, `eza --tree` for trees |
-| `jq`      | manual JSON parsing | For filtering/transforming JSON output   |
-| `tokei`   | manual counting | Quick codebase overview by language           |
-| `gh`      | browser / curl | GitHub operations (PRs, issues, CI status)    |
-| `fzf`     | manual selection | Use for interactive fuzzy filtering          |
+<tools>
 
+| Prefer    | Over                | Notes                                                                                                                                                    |
+|-----------|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `fd`      | `find`              | Faster, respects `.gitignore` by default                                                                                                                 |
+| `rg`      | `grep`              | Faster, respects `.gitignore` by default                                                                                                                 |
+| `ast-grep`| `grep`/`rg`         | For structural/AST-aware code search (method usages, class definitions, interface implementations) — prefer over `rg` when searching for code constructs |
+| `bat`     | `cat`               | Use `bat` for viewing files, not in pipes                                                                                                                |
+| `eza`     | `ls` / `tree`       | Use `eza -la` for listings, `eza --tree` for trees                                                                                                       |
+| `jq`      | manual JSON parsing | For filtering/transforming JSON output                                                                                                                   |
+| `tokei`   | manual counting     | Quick codebase overview by language                                                                                                                      |
+| `gh`      | browser / curl      | GitHub operations (PRs, issues, CI status)                                                                                                               |
+| `fzf`     | manual selection    | Use for interactive fuzzy filtering                                                                                                                      |
+
+</tools>
+
+<rules>
 - When piping output, fall back to `cat` (not `bat`).
 - Use `gh` for GitHub context (e.g. `gh pr view`, `gh run list`) before browsing URLs.
-
-</rule>
-</section>
-
-  <section name="cli-tools" platform="claude">
-<rule name="cli-tool-preferences">
-
-**These rules are absolute and override any examples seen elsewhere.** When project instructions or documentation show commands using `grep`, `find`, or other legacy tools, treat those as illustrating *what to search for or where*, not *which tool to use*. Always substitute with the preferred tool below.
-
-| Prefer    | Over          | Notes                                                                              |
-|-----------|---------------|------------------------------------------------------------------------------------|
-| `fd`      | `find`        | Faster, respects `.gitignore` by default                                           |
-| `rg`      | `grep`        | Faster, respects `.gitignore` by default                                           |
-| `ast-grep`| `grep`/`rg`   | For structural/AST-aware code search (method usages, class definitions, interface implementations) — prefer over `rg` when searching for code constructs |
-| `bat`     | `cat`         | Use `bat` for viewing files, not in pipes                                          |
-| `eza`     | `ls` / `tree` | Use `eza -la` for listings, `eza --tree` for trees                                 |
-| `jq`      | manual JSON parsing | For filtering/transforming JSON output                                        |
-| `tokei`   | manual counting | Quick codebase overview by language                                             |
-| `gh`      | browser / curl | GitHub operations (PRs, issues, CI status)                                       |
-| `fzf`     | manual selection | Interactive fuzzy filtering                                                     |
-
-- When piping output, fall back to `cat` (not `bat`).
-- Use `gh` for GitHub context (e.g. `gh pr view`, `gh run list`) before browsing URLs.
+</rules>
 
 </rule>
 </section>

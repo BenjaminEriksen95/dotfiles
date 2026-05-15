@@ -82,7 +82,7 @@ Like `<head>` but appended at the end. Useful for footers.
 |-------|-------------|
 | `all` | Both tools |
 | `copilot` | Copilot CLI only |
-| `claude` | Claude Code only |
+| `claude` | Claude Code only! |
 
 Comma-separated values are also accepted: `platform="copilot,claude"` (same as
 `all`).
