@@ -1,0 +1,801 @@
+<instructions>
+
+  <head platform="copilot">
+# Copilot Instructions
+</head>
+
+  <head platform="claude">
+# Claude Code — Global Instructions
+</head>
+
+  <section name="skills-claude" platform="claude">
+## Skills
+
+<context name="gstack-skills">
+
+Built-in gstack skills live in `~/.claude/skills/`.
+
+- **graphify** (`~/.claude/skills/graphify/SKILL.md`) — any input to knowledge graph. Trigger: `/graphify`
+  When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.
+
+</context>
+
+<context name="user-skills">
+
+Personal skill library lives in `~/.claude/user-skills/`. See `~/.claude/user-skills/INDEX.md` for the full index of available skills, their trigger domains, and which reference files they contain.
+
+### Skill Structure
+
+```
+~/.claude/user-skills/
+  INDEX.md                   ← discovery file: lists all skills, triggers, and reference contents
+  {skill-name}/
+    SKILL.md                 ← frontmatter (name, description/triggers) + reference index table
+    references/              ← topic-specific knowledge files
+```
+
+When a task requires project-specific knowledge, read `~/.claude/user-skills/INDEX.md` to discover relevant skills, then load only the reference files that apply.
+
+</context>
+</section>
+
+  <section name="agents-claude" platform="claude">
+## Agents
+
+<context name="agents">
+
+Agent workflow files live in `~/.claude/agents/*.md`. Each file contains a self-contained prompt for a focused task agent.
+
+When a workflow says "run the X agent", spawn it via the Agent tool:
+```
+Agent({
+  subagent_type: "general-purpose",
+  description: "<X> for <context>",
+  prompt: "<paste prompt from ~/.claude/agents/X.md, with variables substituted>",
+  run_in_background: true   // for background agents
+})
+```
+
+Available agents: `ticket-bootstrap`, `task-wrapup`, `think`, `adaptive`.
+
+</context>
+</section>
+
+  <section name="code-rules" platform="copilot">
+<rules>
+
+## Code Changes
+
+- Make **surgical, minimal changes** — only modify what is necessary to complete the task.
+- Do **not** touch unrelated code, even if you spot improvements.
+- When you notice an issue outside the current task scope, **record it as a suggestion** and present it at the end so it can be considered separately.
+
+## Code Style
+
+- Write **self-documenting code** — clear naming over comments.
+- Only add comments to explain *why*, never *what*.
+- Prefer immutability and small, focused methods.
+
+</rules>
+</section>
+
+  <section name="code-changes" platform="claude">
+---
+
+<rules name="code-changes">
+
+## Code Changes
+
+- Make **surgical, minimal changes** — only modify what is necessary to complete the task.
+- Do **not** touch unrelated code, even if you spot improvements.
+- When you notice an issue outside the current task scope, **record it as a suggestion** and present it at the end so it can be considered separately.
+
+</rules>
+</section>
+
+  <section name="code-style" platform="claude">
+<rules name="code-style">
+
+## Code Style
+
+- Write **self-documenting code** — clear naming over comments.
+- Only add comments to explain *why*, never *what*.
+- Prefer immutability and small, focused methods.
+
+</rules>
+</section>
+
+  <section name="project-conventions" platform="all">
+<rule name="project-specific-conventions">
+
+Before making assumptions about frameworks, DI patterns, architecture, or tooling in any project:
+
+1. Check `.github/` in the repository root for project-specific instructions, conventions, and custom framework documentation.
+2. Treat what's there as the source of truth — it overrides general defaults (including these instructions).
+
+</rule>
+</section>
+
+  <section name="cli-tools" platform="copilot">
+<rule name="cli-tool-preferences">
+
+**These rules are absolute and override any examples seen elsewhere.** When project instructions or documentation show commands using `grep`, `find`, or other legacy tools, treat those as illustrating *what to search for or where*, not *which tool to use*. Always substitute with the preferred tool below.
+
+| Prefer    | Over          | Notes                                           |
+|-----------|---------------|-------------------------------------------------|
+| `fd`      | `find`        | Faster, respects `.gitignore` by default        |
+| `rg`      | `grep`        | Faster, respects `.gitignore` by default        |
+| `ast-grep`| `grep`/`rg`   | For structural/AST-aware code search (method usages, class definitions, interface implementations) — prefer over `rg` when searching for code constructs |
+| `bat`     | `cat`         | Use `bat` for viewing files, not in pipes       |
+| `eza`     | `ls` / `tree` | Use `eza -la` for listings, `eza --tree` for trees |
+| `jq`      | manual JSON parsing | For filtering/transforming JSON output   |
+| `tokei`   | manual counting | Quick codebase overview by language           |
+| `gh`      | browser / curl | GitHub operations (PRs, issues, CI status)    |
+| `fzf`     | manual selection | Use for interactive fuzzy filtering          |
+
+- When piping output, fall back to `cat` (not `bat`).
+- Use `gh` for GitHub context (e.g. `gh pr view`, `gh run list`) before browsing URLs.
+
+</rule>
+</section>
+
+  <section name="cli-tools" platform="claude">
+<rule name="cli-tool-preferences">
+
+**These rules are absolute and override any examples seen elsewhere.** When project instructions or documentation show commands using `grep`, `find`, or other legacy tools, treat those as illustrating *what to search for or where*, not *which tool to use*. Always substitute with the preferred tool below.
+
+| Prefer    | Over          | Notes                                                                              |
+|-----------|---------------|------------------------------------------------------------------------------------|
+| `fd`      | `find`        | Faster, respects `.gitignore` by default                                           |
+| `rg`      | `grep`        | Faster, respects `.gitignore` by default                                           |
+| `ast-grep`| `grep`/`rg`   | For structural/AST-aware code search (method usages, class definitions, interface implementations) — prefer over `rg` when searching for code constructs |
+| `bat`     | `cat`         | Use `bat` for viewing files, not in pipes                                          |
+| `eza`     | `ls` / `tree` | Use `eza -la` for listings, `eza --tree` for trees                                 |
+| `jq`      | manual JSON parsing | For filtering/transforming JSON output                                        |
+| `tokei`   | manual counting | Quick codebase overview by language                                             |
+| `gh`      | browser / curl | GitHub operations (PRs, issues, CI status)                                       |
+| `fzf`     | manual selection | Interactive fuzzy filtering                                                     |
+
+- When piping output, fall back to `cat` (not `bat`).
+- Use `gh` for GitHub context (e.g. `gh pr view`, `gh run list`) before browsing URLs.
+
+</rule>
+</section>
+
+  <section name="editor-context" platform="all">
+<context name="editor">
+
+## Editor Context
+
+- Primary IDE: **IntelliJ IDEA** — assume standard project structure (`src/main/java`, `src/test/java`).
+- Secondary: **Neovim** — used for quick file viewing outside Java source trees.
+
+</context>
+</section>
+
+  <section name="git-multi-account" platform="copilot">
+<context name="git-multi-account">
+
+## Git & SSH Multi-Account Setup
+
+Two GitHub accounts are configured with separate SSH keys and a `~/.gitconfig` `includeIf` setup:
+
+| Account | SSH Alias | Key | Email | Scope |
+|---|---|---|---|---|
+| `BenjaminEriksen95` (personal) | `github.com-personal` | `~/.ssh/id_ed25519` | `Benja.e95@gmail.com` | `~/git/personal/`, `~/dotfiles/` |
+| `be_festina` (work) | `github.com-work` | `~/.ssh/id_work` | `be@festinafinance.com` | `~/git/` (everything else) |
+
+<rules>
+
+**Rules when working with git:**
+- Personal repos live in `~/git/personal/` or `~/dotfiles/` — email and SSH key applied automatically via `~/.gitconfig-personal`
+- Work repos live in `~/git/` (anything not under `personal/`) — work identity is the default in `~/.gitconfig`
+- Worktrees for work repos live in `~/git/worktrees/` — all currently belong to `components` (`festina-life/components`)
+- Always use the SSH alias in remote URLs — **never** bare `git@github.com:`
+  - Personal: `git@github.com-personal:BenjaminEriksen95/<repo>.git`
+  - Work: `git@github.com-work:festina-life/<repo>.git`
+- When cloning a personal repo, clone into `~/git/personal/` using the personal alias
+- When cloning a work repo, clone into `~/git/` using the work alias
+- Use `gh auth switch --user BenjaminEriksen95` before `gh` commands on personal repos
+- Use `gh auth switch --user be_festina` before `gh` commands on work repos
+
+</rules>
+
+</context>
+</section>
+
+  <section name="git-multi-account" platform="claude">
+<context name="git-multi-account">
+
+## Git & SSH Multi-Account Setup
+
+Two GitHub accounts are configured with separate SSH keys and a `~/.gitconfig` `includeIf` setup:
+
+| Account | SSH Alias | Key | Email | Scope |
+|---|---|---|---|---|
+| `BenjaminEriksen95` (personal) | `github.com-personal` | `~/.ssh/id_ed25519` | `Benja.e95@gmail.com` | `~/git/personal/`, `~/dotfiles/` |
+| `be_festina` (work) | `github.com-work` | `~/.ssh/id_work` | `be@festinafinance.com` | `~/git/` (everything else) |
+
+<rules>
+
+- Personal repos live in `~/git/personal/` or `~/dotfiles/` — email and SSH key applied automatically via `~/.gitconfig-personal`
+- Work repos live in `~/git/` (anything not under `personal/`) — work identity is the default in `~/.gitconfig`
+- Worktrees for work repos live in `~/git/worktrees/` — all currently belong to `components` (`festina-life/components`)
+- Always use the SSH alias in remote URLs — **never** bare `git@github.com:`
+  - Personal: `git@github.com-personal:BenjaminEriksen95/<repo>.git`
+  - Work: `git@github.com-work:festina-life/<repo>.git`
+- When cloning a personal repo, clone into `~/git/personal/` using the personal alias
+- When cloning a work repo, clone into `~/git/` using the work alias
+- Use `gh auth switch --user BenjaminEriksen95` before `gh` commands on personal repos
+- Use `gh auth switch --user be_festina` before `gh` commands on work repos
+
+</rules>
+
+</context>
+</section>
+
+  <section name="skills-adaptive" platform="copilot">
+## Skills & Adaptive Agents
+
+A personal knowledge system lives in `~/.copilot/skills/`. Skills inject domain context; agents consume them at runtime.
+
+<context name="skill-structure">
+
+### Skill Structure
+
+```
+~/.copilot/skills/
+  INDEX.md                  ← discovery file: lists all skills, triggers, and reference contents
+  {skill-name}/
+    SKILL.md                ← frontmatter (name, description/triggers) + reference index table
+    references/             ← topic-specific knowledge files
+    references/interviews/  ← interview questions for skill-builder (not loaded during tasks)
+```
+
+The CLI discovers skills **one level deep** — nested skill folders don't work. The `references/` subfolder groups related knowledge within a skill.
+
+</context>
+
+<context name="index-discovery">
+
+### INDEX.md — The Discovery Entry Point
+
+`~/.copilot/skills/INDEX.md` is the single file listing every skill, its trigger domain, and which reference files it contains. The `adaptive` agent reads this instead of scanning all `SKILL.md` files individually. **Keep it up to date** when skills are added or references change.
+
+</context>
+
+<context name="adaptive-agent">
+
+### Adaptive Agent (`~/.copilot/agents/adaptive.agent.md`)
+
+A self-assembling general-purpose agent that replaces hard-coded specialized agents:
+
+1. **Discover** — reads `INDEX.md` (one file, no scanning)
+2. **Plan** — reasons about which skills/references are relevant to the task
+3. **Load** — reads only the relevant reference files in parallel
+4. **Execute** — does the work with assembled context
+
+**Default for Jira work** — whenever the user mentions a ticket key, always delegate to the adaptive agent rather than handling inline. It bootstraps `bd` + branch conventions automatically on every run.
+
+Use for any complex multi-step task that benefits from project-specific knowledge. Knowledge stays in skills; agents stay thin.
+
+</context>
+
+<context name="bootstrap-pattern">
+
+### Bootstrap Pattern
+
+Any agent `.agent.md` can self-load skill references at startup via a `## Bootstrap` section listing files to `view` before starting. Updates to skill references are automatically picked up by all agents that reference them.
+
+</context>
+
+<context name="extending-skills">
+
+### Extending Skills
+
+- **Add a skill**: `mkdir -p ~/.copilot/skills/{name}/references`, create `SKILL.md` with frontmatter + reference index, add entry to `INDEX.md`
+- **Populate a placeholder**: say *"update my {skill} skill"* — `skill-builder` runs the interview and writes the reference file
+- **Festina-life note**: its references are orientation summaries — the canonical source is `~/git/components/.github/copilot-instructions.md`
+
+</context>
+</section>
+
+  <section name="jira-workflow" platform="copilot">
+## Jira Task Workflow (Default)
+
+<workflow name="jira-ticket-bootstrap">
+
+**Whenever the user gives you a Jira ticket key (AP-XXXX, NN-XXXX, LIFE-XXXX, etc.), always run the `ticket-bootstrap` agent first — in the background — before doing any work.**
+
+```
+task(agent_type="general-purpose", name="ticket-bootstrap", mode="background",
+     prompt="Run the ticket-bootstrap agent for <TICKET>. Working directory: <cwd>")
+```
+
+<step order="1">
+Fetch the Jira ticket details
+</step>
+
+<step order="2">
+Check for / create a `bd` epic linked to the ticket
+</step>
+
+<step order="3">
+Derive and create the git branch
+</step>
+
+<step order="4">
+Claim the task
+</step>
+
+<step order="5">
+Return a handoff summary
+</step>
+
+Wait for the handoff summary, then continue the work in the main session using that context.
+Do not propose a branch name or create bd tasks manually — the bootstrap agent handles it.
+
+</workflow>
+</section>
+
+  <section name="jira-workflow" platform="claude">
+---
+
+## Jira Task Workflow (Default)
+
+<workflow name="jira-ticket-bootstrap">
+
+**Whenever the user gives you a Jira ticket key (AP-XXXX, NN-XXXX, LIFE-XXXX, etc.), always run the `ticket-bootstrap` agent first — in the background — before doing any work.**
+
+```
+Agent({
+  subagent_type: "general-purpose",
+  description: "ticket-bootstrap for <TICKET>",
+  prompt: "<read ~/.claude/agents/ticket-bootstrap.md and substitute TICKET + cwd>",
+  run_in_background: true
+})
+```
+
+Wait for the handoff summary, then continue the work in the main session using that context.
+Do not propose a branch name or create bd tasks manually — the bootstrap agent handles it.
+
+</workflow>
+</section>
+
+  <section name="task-wrapup" platform="copilot">
+---
+
+## Task Wrap-Up Workflow
+
+<workflow name="task-wrap-up">
+
+**When the user says "wrap up", "done", "ready for PR", "close out {TICKET}", or "create PR", invoke the `task-wrapup` agent.**
+
+```
+task(agent_type="general-purpose", name="task-wrapup", mode="background",
+     prompt="Run the task-wrapup agent. Working directory: <cwd>")
+```
+
+<step order="1">
+Close bd subtasks and update the epic
+</step>
+
+<step order="2">
+Create or update the PR (idempotent)
+</step>
+
+<step order="3">
+Load and execute any scope/type-specific extensions
+</step>
+
+<step order="4">
+Return a handoff summary
+</step>
+
+Wait for the handoff summary, then relay results to the user.
+Do not manually create PRs or close bd tasks — the wrap-up agent handles it.
+
+</workflow>
+</section>
+
+  <section name="task-wrapup" platform="claude">
+---
+
+## Task Wrap-Up Workflow
+
+<workflow name="task-wrap-up">
+
+**When the user says "wrap up", "done", "ready for PR", "close out {TICKET}", or "create PR", invoke the `task-wrapup` agent.**
+
+```
+Agent({
+  subagent_type: "general-purpose",
+  description: "task-wrapup",
+  prompt: "<read ~/.claude/agents/task-wrapup.md>",
+  run_in_background: true
+})
+```
+
+Wait for the handoff summary, then relay results to the user.
+Do not manually create PRs or close bd tasks — the wrap-up agent handles it.
+
+</workflow>
+</section>
+
+  <section name="bd-discovery" platform="copilot">
+---
+
+## Task Discovery with `bd` (Beads)
+
+<workflow name="bd-discovery">
+
+Always check bd when beginning any work session or when handed a ticket:
+
+```bash
+bd ready              # unblocked tasks — start here
+bd list               # all open issues
+bd list --priority 1  # high-priority only
+bd show <id>          # task details + audit trail
+bd epic status        # epic completion overview
+bd prime              # AI-optimised full context dump
+```
+
+<rules>
+
+- **`bd ready`** is the default entry point — it shows only tasks whose dependencies are resolved.
+- Use `bd prime` at the start of a session to get a structured overview of all active work.
+- **Before starting a task**, claim it: `bd update <id> --claim` — atomically sets assignee + in_progress.
+- **When a task is done**, close it: `bd close <id>` — but use judgement; some tasks (e.g. epics, parent tasks) are better closed once the broader work lands (PR merged, branch deployed).
+- In work repos, epics link to Jira via `--external-ref jira-AP-XXXX` — check Jira for acceptance criteria and context.
+- In personal repos, beads titles are the source of truth.
+
+</rules>
+
+</workflow>
+</section>
+
+  <section name="bd-discovery" platform="claude">
+---
+
+## Task Discovery with `bd` (Beads)
+
+<workflow name="bd-discovery">
+
+Always check bd when beginning any work session or when handed a ticket:
+
+```bash
+bd ready              # unblocked tasks — start here
+bd list               # all open issues
+bd list --priority 1  # high-priority only
+bd show <id>          # task details + audit trail
+bd epic status        # epic completion overview
+bd prime              # AI-optimised full context dump
+```
+
+<rules>
+
+- **`bd ready`** is the default entry point — it shows only tasks whose dependencies are resolved.
+- Use `bd prime` at the start of a session to get a structured overview of all active work.
+- **Before starting a task**, claim it: `bd update <id> --claim` — atomically sets assignee + in_progress.
+- **When a task is done**, close it: `bd close <id>` — but use judgement; epics close when PR merges.
+- In work repos, epics link to Jira via `--external-ref jira-AP-XXXX` — check Jira for acceptance criteria and context.
+- In personal repos, beads titles are the source of truth.
+
+</rules>
+
+</workflow>
+</section>
+
+  <section name="communication" platform="copilot">
+## Communication
+
+<rules>
+
+- Be concise. Skip preamble and filler phrases.
+- When presenting multiple options, lead with the recommended one.
+- Surface spotted-but-out-of-scope issues as a **"Suggestions for later"** section at the end of a response, not inline.
+
+</rules>
+
+<context name="conversational-style">
+
+### Conversational Style (chat output only)
+
+For conversational replies — explanations, recommendations, status updates, Q&A — prefer a telegraphic style:
+
+- Drop articles ("the", "a", "an") and auxiliaries ("is", "are", "will be") where meaning stays unambiguous.
+- Lead with the answer; omit hedging, throat-clearing, and recap of the question.
+- Keep technical terms, identifiers, file paths, commands, and proper nouns **exact** — never compress these.
+- One idea per line or short bullet. Tables over prose for comparisons.
+
+</context>
+
+<rules>
+
+**Do NOT apply this style to:**
+- Code, comments, commit messages, PR descriptions, or PR review comments
+- Documentation files (`*.md`, docstrings, READMEs)
+- Anything written *into* a file via `create` or `edit`
+- Anything sent to another human (Slack drafts, email drafts, Jira tickets)
+
+**Auto-revert to full prose when:**
+- Warning about destructive or irreversible actions (deletes, force pushes, drops, prod deploys)
+- Asking for confirmation before a side-effect
+- Walking through a multi-step sequence where order or precision matters
+- The user asks for clarification or repeats a question
+
+Resume telegraphic style after the cautious part is done.
+
+</rules>
+
+<workflow name="request-normalization">
+
+## Request Normalization for Implementation Tasks
+
+When a user asks you to implement something, formulate their request in the following structured template and ask for confirmation before proceeding:
+
+```
+<task>
+What you are asked to do (concise, action-oriented)
+</task>
+
+<context>
+Background information the task needs (project state, related work, decisions already made)
+</context>
+
+<constraints>
+Any limits or rules (scope boundaries, what not to change, performance limits, compatibility requirements)
+</constraints>
+
+<output_format>
+How the result should be delivered (code files, documentation, both, format of changes, success criteria)
+</output_format>
+```
+
+**When to normalize:**
+- Any request asking for code changes, feature implementation, or architectural work
+- Any `bd` (beads) task when discussing implementation approach
+- Any multi-step work where clarifying assumptions will improve accuracy
+
+**How to ask for confirmation:**
+Present the normalized template, then ask:
+> "Is this understanding correct? Anything to adjust before I start?"
+
+**When to skip normalization:**
+- Simple questions (explanations, recommendations, why/how questions)
+- Single-file edits where the task is obvious
+- Follow-ups within an active implementation (user is already engaged)
+
+**For bd tasks specifically:**
+When the user mentions a beads ID or epic, normalize the task description including:
+- What the task is (extracted from bd show output)
+- Acceptance criteria (from linked Jira ticket if applicable)
+- Dependencies (from bd dependencies)
+- Constraints (time estimate, scope limits, deployment considerations)
+
+</workflow>
+
+<example name="conversational-transformation">
+
+**Examples:**
+
+Normal prose → telegraphic:
+- *"The component is re-rendering because you're creating a new object reference on each render. You should wrap it in `useMemo` to fix this."*
+  → *"New object ref each render → re-render. Wrap in `useMemo`."*
+- *"I think the issue is probably caused by the cache not being invalidated when the user logs out."*
+  → *"Cache not invalidated on logout."*
+- *"Let me know if you'd like me to also update the tests."*
+  → *"Want me to update tests too?"*
+
+Auto-revert (stay in full prose):
+- *"⚠ This will force-push to `main` and overwrite the remote history for all collaborators. Confirm before I proceed?"*
+- *"Before running this, make sure you have a backup of the `users` table — the migration drops and recreates it."*
+
+</example>
+</section>
+
+  <section name="communication" platform="claude">
+---
+
+## Communication
+
+<rules name="communication">
+
+- Be concise. Skip preamble and filler phrases.
+- When presenting multiple options, lead with the recommended one.
+- Surface spotted-but-out-of-scope issues as a **"Suggestions for later"** section at the end of a response, not inline.
+
+</rules>
+
+<context name="conversational-style">
+
+### Conversational Style (chat output only)
+
+For conversational replies — explanations, recommendations, status updates, Q&A — prefer a telegraphic style:
+
+- Drop articles ("the", "a", "an") and auxiliaries ("is", "are", "will be") where meaning stays unambiguous.
+- Lead with the answer; omit hedging, throat-clearing, and recap of the question.
+- Keep technical terms, identifiers, file paths, commands, and proper nouns **exact** — never compress these.
+- One idea per line or short bullet. Tables over prose for comparisons.
+
+</context>
+
+<rules>
+
+**Do NOT apply this style to:**
+- Code, comments, commit messages, PR descriptions, or PR review comments
+- Documentation files (`*.md`, docstrings, READMEs)
+- Anything written *into* a file via create or edit
+- Anything sent to another human (Slack drafts, email drafts, Jira tickets)
+
+**Auto-revert to full prose when:**
+- Warning about destructive or irreversible actions (deletes, force pushes, drops, prod deploys)
+- Asking for confirmation before a side-effect
+- Walking through a multi-step sequence where order or precision matters
+- The user asks for clarification or repeats a question
+
+Resume telegraphic style after the cautious part is done.
+
+</rules>
+
+<workflow name="request-normalization">
+
+## Request Normalization for Implementation Tasks
+
+When a user asks you to implement something, formulate their request in the following structured template and ask for confirmation before proceeding:
+
+```
+<task>
+What you are asked to do (concise, action-oriented)
+</task>
+
+<context>
+Background information the task needs (project state, related work, decisions already made)
+</context>
+
+<constraints>
+Any limits or rules (scope boundaries, what not to change, performance limits, compatibility requirements)
+</constraints>
+
+<output_format>
+How the result should be delivered (code files, documentation, both, format of changes, success criteria)
+</output_format>
+```
+
+**When to normalize:**
+- Any request asking for code changes, feature implementation, or architectural work
+- Any `bd` task when discussing implementation approach
+- Any multi-step work where clarifying assumptions will improve accuracy
+
+**When to skip normalization:**
+- Simple questions (explanations, recommendations, why/how questions)
+- Single-file edits where the task is obvious
+- Follow-ups within an active implementation (user is already engaged)
+
+**How to ask for confirmation:**
+Present the normalized template, then ask:
+> "Is this understanding correct? Anything to adjust before I start?"
+
+</workflow>
+</section>
+
+  <section name="systems-thinking" platform="copilot">
+## Systems Thinking
+
+<context name="design-lenses">
+
+Software work increasingly *is* system design — composing agents, skills, services, workflows — not just writing code. Default lenses to apply when reasoning about any non-trivial change:
+
+- **Loops, not lines.** Production issues are usually feedback loops (retry storms, cache staleness, agent context drift, queue blow-ups) — not single failures. Identify what amplifies and what dampens before patching the symptom.
+- **Boundaries are where bugs live.** Most defects sit on interfaces between components, not inside them. Be explicit about where one system's responsibility ends and the next begins.
+- **Throughput = slowest stage.** Optimising anywhere except the bottleneck is wasted effort. In agentic work the bottleneck is usually context budget or human attention, not compute.
+- **Second-order effects.** Every change introduces new behaviour. Cache trades latency for staleness; agent trades throughput for traceability; retry trades reliability for load. Name the trade explicitly when proposing a change.
+- **Leverage points (Meadows ladder).** Prefer high-leverage changes: paradigm > goals > rules > parameters > constants. Tuning a constant rarely fixes a structural problem.
+- **Observability before optimisation.** Cannot reason about a system you cannot see. If a behaviour matters, instrument it before tuning it.
+- **Stocks accumulate; flows are what you control.** Queues, technical debt, agent context, open PRs, half-built migrations — watch what builds up. The stock is the symptom; flow imbalance is the cause.
+
+</context>
+
+<decision>
+
+When designing or changing an agent / skill / workflow, ask:
+*what loops does this create or break? what becomes the new bottleneck? what's the second-order effect on neighbouring systems?*
+
+</decision>
+
+<note>
+
+For deep strategic analysis, the **`think` agent** plus the Strategist / Consequentialist / First-Principles personas encode parts of this lens — invoke them when systems thinking needs to be the *whole job* rather than a default backdrop.
+
+</note>
+</section>
+
+  <section name="systems-thinking" platform="claude">
+---
+
+## Systems Thinking
+
+<context name="design-lenses">
+
+Software work increasingly *is* system design — composing agents, skills, services, workflows — not just writing code. Default lenses to apply when reasoning about any non-trivial change:
+
+- **Loops, not lines.** Production issues are usually feedback loops (retry storms, cache staleness, agent context drift, queue blow-ups) — not single failures. Identify what amplifies and what dampens before patching the symptom.
+- **Boundaries are where bugs live.** Most defects sit on interfaces between components, not inside them. Be explicit about where one system's responsibility ends and the next begins.
+- **Throughput = slowest stage.** Optimising anywhere except the bottleneck is wasted effort. In agentic work the bottleneck is usually context budget or human attention, not compute.
+- **Second-order effects.** Every change introduces new behaviour. Cache trades latency for staleness; agent trades throughput for traceability; retry trades reliability for load. Name the trade explicitly when proposing a change.
+- **Leverage points (Meadows ladder).** Prefer high-leverage changes: paradigm > goals > rules > parameters > constants. Tuning a constant rarely fixes a structural problem.
+- **Observability before optimisation.** Cannot reason about a system you cannot see. If a behaviour matters, instrument it before tuning it.
+- **Stocks accumulate; flows are what you control.** Queues, technical debt, agent context, open PRs, half-built migrations — watch what builds up. The stock is the symptom; flow imbalance is the cause.
+
+</context>
+
+<decision>
+
+When designing or changing an agent / skill / workflow, ask:
+*What loops does this create or break? What becomes the new bottleneck? What's the second-order effect on neighbouring systems?*
+
+</decision>
+</section>
+
+  <section name="think-agent" platform="copilot">
+## Think Agent — Model Convention
+
+<context name="think-agent">
+
+A `think` agent exists at `~/.copilot/agents/think.agent.md` for deep strategic reasoning.
+
+</context>
+
+<trigger>
+
+**When to invoke it:** When the user says "think about X", asks for strategic analysis, wants tradeoffs evaluated, or needs a hypothesis challenged — especially in the algo-trader context.
+
+</trigger>
+
+<rule name="think-model">
+
+**Always invoke it with `model: "claude-opus-4.6"`** via the task tool:
+```
+task(agent_type="general-purpose", model="claude-opus-4.6", name="think", prompt="...")
+```
+
+This keeps the main session on Sonnet (cheap, fast) while routing deep analysis through Opus (premium reasoning). The user doesn't need to switch models manually.
+
+</rule>
+</section>
+
+  <section name="think-agent" platform="claude">
+---
+
+## Think Agent — Model Convention
+
+<context name="think-agent">
+
+A `think` agent exists at `~/.claude/agents/think.md` for deep strategic reasoning.
+
+</context>
+
+<trigger>
+
+**When to invoke it:** When the user says "think about X", asks for strategic analysis, wants tradeoffs evaluated, or needs a hypothesis challenged — especially in the algo-trader context.
+
+</trigger>
+
+<rule name="think-model">
+
+**Always invoke it with `model: "opus"`** via the Agent tool:
+```
+Agent({
+  subagent_type: "general-purpose",
+  model: "opus",
+  description: "think: <topic>",
+  prompt: "<read ~/.claude/agents/think.md and append the user's question>"
+})
+```
+
+This keeps the main session on Sonnet (cheap, fast) while routing deep analysis through Opus (premium reasoning). The user doesn't need to switch models manually.
+
+</rule>
+</section>
+
+</instructions>

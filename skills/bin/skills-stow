@@ -48,6 +48,10 @@ while IFS= read -r src; do
 done < <(read_sources)
 
 echo ""
+log "Compiling instruction files..."
+"$SCRIPT_DIR/instructions-build"
+
+echo ""
 log "Done. Symlink spot-check:"
 for skill in tagify skill-builder; do
   printf "  ~/.copilot/skills/%-25s → %s\n" "$skill" \

@@ -1,0 +1,279 @@
+#!/usr/bin/env python3
+"""
+instructions-build — compile XML instruction fragments into per-tool markdown.
+
+Usage:
+  instructions-build               # write both target files (idempotent)
+  instructions-build --check       # dry-run; exit 1 if any target would change
+  instructions-build --stdout copilot|claude   # print one platform to stdout
+"""
+
+import sys
+import re
+import difflib
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+DOTFILES_SKILLS = Path.home() / "dotfiles" / "skills"
+BASE_XML        = DOTFILES_SKILLS / "instructions" / "base.xml"
+SOURCES_FILE    = DOTFILES_SKILLS / "sources"
+TARGETS = {
+    "copilot": Path.home() / ".copilot" / "copilot-instructions.md",
+    "claude":  Path.home() / ".claude"  / "CLAUDE.md",
+}
+PLATFORMS = ("copilot", "claude")
+
+# ---------------------------------------------------------------------------
+# Regex-based XML parser
+#
+# base.xml is NOT a strict XML document — section bodies can contain arbitrary
+# XML-like tags (e.g. <rules>, <context>, <workflow>) that are part of the
+# markdown instruction content, not compiler directives. Using ElementTree
+# would try to parse those as child elements. Instead we use a targeted regex
+# that only recognises the five compiler tags: instructions, head, section,
+# tail, fork.  Any other tag names in the body are treated as opaque text.
+# ---------------------------------------------------------------------------
+_ELEM_RE = re.compile(
+    r"<(head|tail|section|fork)\b([^>]*)>(.*?)</\1>",
+    re.DOTALL,
+)
+_ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
+
+
+def _parse_attrs(attr_str: str) -> dict:
+    return {m.group(1): m.group(2) for m in _ATTR_RE.finditer(attr_str)}
+
+
+def _load_xml(path: Path) -> dict:
+    """
+    Parse a compiler XML file and return:
+      {"heads": [...], "sections": [...], "tails": [...]}
+    Each entry is a dict with "platform", "name" (sections), "text", "source".
+    """
+    text = path.read_text()
+    heads, sections, tails = [], [], []
+
+    for m in _ELEM_RE.finditer(text):
+        tag   = m.group(1)
+        attrs = _parse_attrs(m.group(2))
+        body  = m.group(3)
+        platform = attrs.get("platform", "all")
+        name     = attrs.get("name", "")
+        entry = {"platform": platform, "name": name,
+                 "text": body, "source": str(path)}
+
+        if tag == "head":
+            heads.append(entry)
+        elif tag == "section":
+            sections.append(entry)
+        elif tag == "tail":
+            tails.append(entry)
+        # <fork> at top-level is unusual but harmless; ignored here.
+
+    return {"heads": heads, "sections": sections, "tails": tails}
+
+
+# ---------------------------------------------------------------------------
+# Platform matching
+# ---------------------------------------------------------------------------
+
+def _platforms_for(attr: str) -> set:
+    if not attr or attr == "all":
+        return set(PLATFORMS)
+    return {p.strip() for p in attr.split(",")} & set(PLATFORMS)
+
+
+def _matches(attr: str, platform: str) -> bool:
+    return platform in _platforms_for(attr)
+
+
+def _overlap(a: str, b: str) -> bool:
+    return bool(_platforms_for(a) & _platforms_for(b))
+
+
+# ---------------------------------------------------------------------------
+# Duplicate section check
+# ---------------------------------------------------------------------------
+
+def _check_duplicates(sections: list) -> None:
+    from collections import defaultdict
+    by_name: dict = defaultdict(list)
+    for s in sections:
+        by_name[s["name"]].append(s)
+
+    for name, secs in by_name.items():
+        for i, s1 in enumerate(secs):
+            for s2 in secs[i + 1:]:
+                if _overlap(s1["platform"], s2["platform"]):
+                    sys.exit(
+                        f"ERROR: Duplicate section '{name}' with overlapping platforms\n"
+                        f"  First:  platform='{s1['platform']}'  in {s1['source']}\n"
+                        f"  Second: platform='{s2['platform']}'  in {s2['source']}"
+                    )
+
+
+# ---------------------------------------------------------------------------
+# Fork resolution
+# ---------------------------------------------------------------------------
+_FORK_RE = re.compile(r"<fork\s+platform=\"([^\"]+)\">(.*?)</fork>", re.DOTALL)
+
+
+def _resolve_forks(text: str, platform: str) -> str:
+    def _replace(m: re.Match) -> str:
+        return m.group(2) if _matches(m.group(1), platform) else ""
+    return _FORK_RE.sub(_replace, text)
+
+
+# ---------------------------------------------------------------------------
+# Source list
+# ---------------------------------------------------------------------------
+
+def _read_sources() -> list:
+    if not SOURCES_FILE.exists():
+        return []
+    sources = []
+    with open(SOURCES_FILE) as fh:
+        for raw in fh:
+            line = raw.split("#")[0].strip()
+            if line:
+                sources.append(Path(line.replace("~", str(Path.home()))))
+    return sources
+
+
+# ---------------------------------------------------------------------------
+# Load all XML (base + fragments)
+# ---------------------------------------------------------------------------
+
+def _load_all() -> tuple:
+    if not BASE_XML.exists():
+        sys.exit(f"ERROR: base.xml not found: {BASE_XML}")
+
+    base = _load_xml(BASE_XML)
+    heads    = base["heads"]
+    tails    = base["tails"]
+    sections = list(base["sections"])
+
+    for src in _read_sources():
+        frag_dir = src / "instructions"
+        if not frag_dir.is_dir():
+            continue
+        for xml_file in sorted(frag_dir.glob("*.xml")):
+            frag = _load_xml(xml_file)
+            if frag["heads"]:
+                sys.exit(f"ERROR: Fragment {xml_file} must not contain <head> elements.")
+            if frag["tails"]:
+                sys.exit(f"ERROR: Fragment {xml_file} must not contain <tail> elements.")
+            sections.extend(frag["sections"])
+
+    _check_duplicates(sections)
+    return heads, sections, tails
+
+
+# ---------------------------------------------------------------------------
+# Compile one platform
+# ---------------------------------------------------------------------------
+
+def _compile(heads: list, sections: list, tails: list, platform: str) -> str:
+    parts = []
+
+    for h in heads:
+        if _matches(h["platform"], platform):
+            t = h["text"].strip("\n")
+            if t:
+                parts.append(t)
+            break  # at most one head per platform
+
+    for s in sections:
+        if _matches(s["platform"], platform):
+            t = _resolve_forks(s["text"], platform).strip("\n")
+            if t:
+                parts.append(t)
+
+    for t_entry in tails:
+        if _matches(t_entry["platform"], platform):
+            t = t_entry["text"].strip("\n")
+            if t:
+                parts.append(t)
+            break  # at most one tail per platform
+
+    return "\n\n".join(parts) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# Modes
+# ---------------------------------------------------------------------------
+
+def _mode_stdout(platform: str) -> int:
+    heads, sections, tails = _load_all()
+    sys.stdout.write(_compile(heads, sections, tails, platform))
+    return 0
+
+
+def _mode_check() -> int:
+    heads, sections, tails = _load_all()
+    any_diff = False
+    for platform, target in TARGETS.items():
+        expected = _compile(heads, sections, tails, platform)
+        actual   = target.read_text() if target.exists() else ""
+        if expected == actual:
+            print(f"  ok (unchanged): {target}")
+            continue
+        any_diff = True
+        diff = list(difflib.unified_diff(
+            actual.splitlines(keepends=True),
+            expected.splitlines(keepends=True),
+            fromfile=str(target),
+            tofile="<compiled>",
+        ))
+        print(f"\n--- {platform} would change ---")
+        sys.stdout.writelines(diff[:80])
+        if len(diff) > 80:
+            print(f"  ... ({len(diff) - 80} more diff lines)")
+    return 1 if any_diff else 0
+
+
+def _mode_write() -> int:
+    heads, sections, tails = _load_all()
+    changed = []
+    for platform, target in TARGETS.items():
+        expected = _compile(heads, sections, tails, platform)
+        if target.exists() and target.read_text() == expected:
+            print(f"  unchanged: {target}")
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(expected)
+            print(f"  updated:   {target}")
+            changed.append(target.name)
+    if changed:
+        print(f"Updated: {', '.join(changed)}")
+    else:
+        print("No changes.")
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+def main() -> int:
+    args = sys.argv[1:]
+
+    if "--stdout" in args:
+        idx = args.index("--stdout")
+        if idx + 1 >= len(args):
+            sys.exit("ERROR: --stdout requires a platform argument (copilot|claude)")
+        platform = args[idx + 1]
+        if platform not in PLATFORMS:
+            sys.exit(f"ERROR: unknown platform '{platform}'; choose from: {', '.join(PLATFORMS)}")
+        return _mode_stdout(platform)
+
+    if "--check" in args:
+        return _mode_check()
+
+    return _mode_write()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
