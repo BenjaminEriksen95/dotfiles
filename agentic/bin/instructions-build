@@ -3,9 +3,9 @@
 instructions-build — compile XML instruction fragments into per-tool markdown.
 
 Usage:
-  instructions-build               # write both target files (idempotent)
-  instructions-build --check       # dry-run; exit 1 if any target would change
-  instructions-build --stdout copilot|claude|gemini|pi|omp   # print one platform to stdout
+  instructions-build               # write the target file (idempotent)
+  instructions-build --check       # dry-run; exit 1 if the target would change
+  instructions-build --stdout omp  # print compiled output to stdout
 """
 
 import sys
@@ -20,13 +20,9 @@ DOTFILES_SKILLS = Path.home() / "dotfiles" / "agentic"
 BASE_XML        = DOTFILES_SKILLS / "instructions" / "base.xml"
 SOURCES_FILE    = DOTFILES_SKILLS / "sources"
 TARGETS = {
-    "copilot": Path.home() / ".copilot" / "copilot-instructions.md",
-    "claude":  Path.home() / ".claude"  / "CLAUDE.md",
-    "gemini":  Path.home() / ".gemini"  / "GEMINI.md",
-    "pi":      Path.home() / ".pi" / "agent" / "AGENTS.md",
-    "omp":     Path.home() / ".omp" / "agent" / "AGENTS.md",
+    "omp": Path.home() / ".omp" / "agent" / "AGENTS.md",
 }
-PLATFORMS = ("copilot", "claude", "gemini", "pi", "omp")
+PLATFORMS = ("omp",)
 
 # ---------------------------------------------------------------------------
 # Regex-based XML parser
@@ -269,7 +265,7 @@ def main() -> int:
     if "--stdout" in args:
         idx = args.index("--stdout")
         if idx + 1 >= len(args):
-            sys.exit("ERROR: --stdout requires a platform argument (copilot|claude|gemini|pi|omp)")
+            sys.exit("ERROR: --stdout requires a platform argument (omp)")
         platform = args[idx + 1]
         if platform not in PLATFORMS:
             sys.exit(f"ERROR: unknown platform '{platform}'; choose from: {', '.join(PLATFORMS)}")

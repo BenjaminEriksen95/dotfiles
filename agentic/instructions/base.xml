@@ -1,69 +1,10 @@
 <instructions>
 
-  <head platform="copilot">
-# Copilot Instructions
+  <head platform="omp">
+# Agent Instructions
 </head>
 
-  <head platform="claude">
-# Claude Code — Global Instructions
-</head>
-
-  <section name="skills-claude" platform="claude">
-## Skills
-
-<context name="gstack-skills">
-
-Built-in gstack skills live in `~/.claude/skills/`.
-
-- **graphify** (`~/.claude/skills/graphify/SKILL.md`) — any input to knowledge graph. Trigger: `/graphify`
-  When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.
-
-</context>
-
-<context name="user-skills">
-
-Personal skill library lives in `~/.claude/user-skills/`. See `~/.claude/user-skills/INDEX.md` for the full index of available skills, their trigger domains, and which reference files they contain.
-
-### Skill Structure
-
-```
-~/.claude/user-skills/
-  INDEX.md                   ← discovery file: lists all skills, triggers, and reference contents
-  {skill-name}/
-    SKILL.md                 ← frontmatter (name, description/triggers) + reference index table
-    references/              ← topic-specific knowledge files
-```
-
-When a task requires project-specific knowledge, read `~/.claude/user-skills/INDEX.md` to discover relevant skills, then load only the reference files that apply.
-
-</context>
-</section>
-
-  <section name="agents-claude" platform="claude">
-## Agents
-
-<context name="agents">
-
-Agent workflow files live in `~/.claude/agents/*.md`. Each file contains a self-contained prompt for a focused task agent.
-
-When a workflow says "run the X agent", spawn it via the Agent tool:
-```
-Agent({
-  subagent_type: "general-purpose",
-  description: "<X> for <context>",
-  prompt: "<paste prompt from ~/.claude/agents/X.md, with variables substituted>",
-  run_in_background: true   // for background agents
-})
-```
-
-Available agents: `ticket-bootstrap`, `task-wrapup`, `think`, `adaptive`.
-
-</context>
-</section>
-
-  <section name="code-rules" platform="all">
-<fork platform="claude">---</fork>
-
+  <section name="code-rules" platform="omp">
 <rules name="code-rules">
 
 ## Code Changes
@@ -88,7 +29,7 @@ Available agents: `ticket-bootstrap`, `task-wrapup`, `think`, `adaptive`.
 </rules>
 </section>
 
-  <section name="project-conventions" platform="all">
+  <section name="project-conventions" platform="omp">
 <rule name="project-specific-conventions">
 
 Before making assumptions about frameworks, DI patterns, architecture, or tooling in any project:
@@ -99,10 +40,10 @@ Before making assumptions about frameworks, DI patterns, architecture, or toolin
 </rule>
 </section>
 
-  <section name="economy" platform="all">
+  <section name="economy" platform="omp">
 ## Economy
 
-Input tokens are ~99.5% of session cost — output is negligible. Before every response: load only what is needed, avoid sub-agents for simple lookups, and match model to task. Keep context lean and responses tight.
+Input tokens are ~99.5% of session cost — output is negligible. Before every response: load only what is needed, avoid subagents for simple lookups, and match model to task. Keep context lean and responses tight.
 
 <rules name="economy-responses">
 - No preamble or filler ("Certainly!", "Great question"); no closing summary unless asked.
@@ -130,228 +71,7 @@ Input tokens are ~99.5% of session cost — output is negligible. Before every r
 </rules>
 </section>
 
-  <section name="editor-context" platform="all">
-<context name="editor">
-
-## Editor Context
-
-- Primary IDE: **IntelliJ IDEA** — assume standard project structure (`src/main/java`, `src/test/java`).
-- Secondary: **Neovim** — used for quick file viewing outside Java source trees.
-
-</context>
-</section>
-
-  <section name="git-multi-account" platform="all">
-<context name="git-multi-account">
-
-## Git & SSH Multi-Account Setup
-
-Two GitHub accounts are configured with separate SSH keys and a `~/.gitconfig` `includeIf` setup:
-
-| Account | SSH Alias | Key | Email | Scope |
-|---|---|---|---|---|
-| `BenjaminEriksen95` (personal) | `github.com-personal` | `~/.ssh/id_ed25519` | `Benja.e95@gmail.com` | `~/git/personal/`, `~/dotfiles/` |
-| `be_festina` (work) | `github.com-work` | `~/.ssh/id_work` | `be@festinafinance.com` | `~/git/` (everything else) |
-
-<rules>
-
-<fork platform="copilot">**Rules when working with git:**
-</fork>- Personal repos live in `~/git/personal/` or `~/dotfiles/` — email and SSH key applied automatically via `~/.gitconfig-personal`
-- Work repos live in `~/git/` (anything not under `personal/`) — work identity is the default in `~/.gitconfig`
-- Worktrees for work repos live in `~/git/worktrees/` — all currently belong to `components` (`festina-life/components`)
-- Always use the SSH alias in remote URLs — **never** bare `git@github.com:`
-  - Personal: `git@github.com-personal:BenjaminEriksen95/<repo>.git`
-  - Work: `git@github.com-work:festina-life/<repo>.git`
-- When cloning a personal repo, clone into `~/git/personal/` using the personal alias
-- When cloning a work repo, clone into `~/git/` using the work alias
-- Use `gh auth switch --user BenjaminEriksen95` before `gh` commands on personal repos
-- Use `gh auth switch --user be_festina` before `gh` commands on work repos
-
-</rules>
-
-</context>
-</section>
-
-  <section name="skills-adaptive" platform="copilot">
-## Skills & Adaptive Agents
-
-A personal knowledge system lives in `~/.copilot/skills/`. Skills inject domain context; agents consume them at runtime.
-
-<context name="skill-structure">
-
-### Skill Structure
-
-```
-~/.copilot/skills/
-  INDEX.md                  ← discovery file: lists all skills, triggers, and reference contents
-  {skill-name}/
-    SKILL.md                ← frontmatter (name, description/triggers) + reference index table
-    references/             ← topic-specific knowledge files
-    references/interviews/  ← interview questions for skill-builder (not loaded during tasks)
-```
-
-The CLI discovers skills **one level deep** — nested skill folders don't work. The `references/` subfolder groups related knowledge within a skill.
-
-</context>
-
-<context name="index-discovery">
-
-### INDEX.md — The Discovery Entry Point
-
-`~/.copilot/skills/INDEX.md` is the single file listing every skill, its trigger domain, and which reference files it contains. The `adaptive` agent reads this instead of scanning all `SKILL.md` files individually. **Keep it up to date** when skills are added or references change.
-
-</context>
-
-<context name="adaptive-agent">
-
-### Adaptive Agent (`~/.copilot/agents/adaptive.agent.md`)
-
-A self-assembling general-purpose agent that replaces hard-coded specialized agents:
-
-1. **Discover** — reads `INDEX.md` (one file, no scanning)
-2. **Plan** — reasons about which skills/references are relevant to the task
-3. **Load** — reads only the relevant reference files in parallel
-4. **Execute** — does the work with assembled context
-
-**Default for Jira work** — whenever the user mentions a ticket key, always delegate to the adaptive agent rather than handling inline. It sets up branch conventions automatically on every run.
-
-Use for any complex multi-step task that benefits from project-specific knowledge. Knowledge stays in skills; agents stay thin.
-
-</context>
-
-<context name="bootstrap-pattern">
-
-### Bootstrap Pattern
-
-Any agent `.agent.md` can self-load skill references at startup via a `## Bootstrap` section listing files to `view` before starting. Updates to skill references are automatically picked up by all agents that reference them.
-
-</context>
-
-<context name="extending-skills">
-
-### Extending Skills
-
-- **Add a skill**: `mkdir -p ~/.copilot/skills/{name}/references`, create `SKILL.md` with frontmatter + reference index, add entry to `INDEX.md`
-- **Populate a placeholder**: say *"update my {skill} skill"* — `skill-builder` runs the interview and writes the reference file
-- **Festina-life note**: its references are orientation summaries — the canonical source is `~/git/components/.github/copilot-instructions.md`
-
-</context>
-</section>
-
-  <section name="jira-workflow" platform="copilot">
-## Jira Task Workflow (Default)
-
-<workflow name="jira-ticket-bootstrap">
-
-**Whenever the user gives you a Jira ticket key (AP-XXXX, NN-XXXX, LIFE-XXXX, etc.), always run the `ticket-bootstrap` agent first — in the background — before doing any work.**
-
-```
-task(agent_type="general-purpose", name="ticket-bootstrap", mode="background",
-     prompt="Run the ticket-bootstrap agent for <TICKET>. Working directory: <cwd>")
-```
-
-<step order="1">
-Fetch the Jira ticket details
-</step>
-
-<step order="2">
-Derive and create the git branch
-</step>
-
-<step order="3">
-Claim the task
-</step>
-
-Wait for the handoff summary, then continue the work in the main session using that context.
-Do not propose a branch name — the bootstrap agent handles it.
-
-</workflow>
-</section>
-
-  <section name="jira-workflow" platform="claude" disabled="true">
----
-
-## Jira Task Workflow (Default)
-
-<workflow name="jira-ticket-bootstrap">
-
-**Whenever the user gives you a Jira ticket key (AP-XXXX, NN-XXXX, LIFE-XXXX, etc.), always run the `ticket-bootstrap` agent first — in the background — before doing any work.**
-
-```
-Agent({
-  subagent_type: "general-purpose",
-  description: "ticket-bootstrap for <TICKET>",
-  prompt: "<read ~/.claude/agents/ticket-bootstrap.md and substitute TICKET + cwd>",
-  run_in_background: true
-})
-```
-
-Wait for the handoff summary, then continue the work in the main session using that context.
-Do not propose a branch name — the bootstrap agent handles it.
-
-</workflow>
-</section>
-
-  <section name="task-wrapup" platform="copilot">
----
-
-## Task Wrap-Up Workflow
-
-<workflow name="task-wrap-up">
-
-**When the user says "wrap up", "done", "ready for PR", "close out {TICKET}", or "create PR", invoke the `task-wrapup` agent.**
-
-```
-task(agent_type="general-purpose", name="task-wrapup", mode="background",
-     prompt="Run the task-wrapup agent. Working directory: <cwd>")
-```
-
-<step order="1">
-Create or update the PR (idempotent)
-</step>
-
-<step order="2">
-Load and execute any scope/type-specific extensions
-</step>
-
-<step order="4">
-Return a handoff summary
-</step>
-
-Wait for the handoff summary, then relay results to the user.
-Do not manually create PRs — the wrap-up agent handles it.
-
-</workflow>
-</section>
-
-  <section name="task-wrapup" platform="claude" disabled="true">
----
-
-## Task Wrap-Up Workflow
-
-<workflow name="task-wrap-up">
-
-**When the user says "wrap up", "done", "ready for PR", "close out {TICKET}", or "create PR", invoke the `task-wrapup` agent.**
-
-```
-Agent({
-  subagent_type: "general-purpose",
-  description: "task-wrapup",
-  prompt: "<read ~/.claude/agents/task-wrapup.md>",
-  run_in_background: true
-})
-```
-
-Wait for the handoff summary, then relay results to the user.
-Do not manually create PRs — the wrap-up agent handles it.
-
-</workflow>
-</section>
-
-
-  <section name="communication" platform="all">
-<fork platform="claude">---</fork>
-
+  <section name="communication" platform="omp">
 ## Communication
 
 <rules name="communication">
@@ -464,9 +184,8 @@ Auto-revert (stay in full prose):
 
 </example>
 </section>
-  <section name="systems-thinking" platform="all">
-<fork platform="claude">---</fork>
 
+  <section name="systems-thinking" platform="omp">
 ## Systems Thinking
 
 <context name="design-lenses">
@@ -492,14 +211,12 @@ When designing or changing an agent / skill / workflow, ask:
 
 <note>
 
-For deep strategic analysis, the **`think` agent** plus the Strategist / Consequentialist / First-Principles personas encode parts of this lens — invoke them when systems thinking needs to be the *whole job* rather than a default backdrop.
+For deep strategic analysis, route the question through a stronger model (see "Deep Reasoning" below) rather than reasoning it out on the default model.
 
 </note>
 </section>
 
-  <section name="hypothesis-driven" platform="all">
-<fork platform="claude">---</fork>
-
+  <section name="hypothesis-driven" platform="omp">
 ## Hypothesis-Driven Problem Solving
 
 <rule name="hypothesis-loop">
@@ -516,14 +233,10 @@ When facing uncertainty — debugging, design exploration, unfamiliar code, ambi
 
 Stop when: hypothesis confirmed with evidence, problem resolved, or three iterations without new signal (escalate or reframe).
 
-For the full protocol with SQL tracking and worked examples, load the `assumption-tree-builder` skill's `hypothesis-loop` reference.
-
 </rule>
 </section>
 
-  <section name="execution-discipline" platform="all">
-<fork platform="claude">---</fork>
-
+  <section name="execution-discipline" platform="omp">
 ## Execution Discipline
 
 <context name="karpathy-guidelines">
@@ -571,63 +284,30 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 </rule>
 </section>
 
-  <section name="think-agent" platform="copilot">
-## Think Agent — Model Convention
+  <section name="think-agent" platform="omp">
+## Deep Reasoning — Model Routing
 
-<context name="think-agent">
+<context name="deep-reasoning">
 
-A `think` agent exists at `~/.copilot/agents/think.agent.md` for deep strategic reasoning.
-
-</context>
-
-<trigger>
-
-**When to invoke it:** When the user says "think about X", asks for strategic analysis, wants tradeoffs evaluated, or needs a hypothesis challenged — especially in the algo-trader context.
-
-</trigger>
-
-<rule name="think-model">
-
-**Always invoke it with `model: "claude-opus-4.6"`** via the task tool:
-```
-task(agent_type="general-purpose", model="claude-opus-4.6", name="think", prompt="...")
-```
-
-This keeps the main session on Sonnet (cheap, fast) while routing deep analysis through Opus (premium reasoning). The user doesn't need to switch models manually.
-
-</rule>
-</section>
-
-  <section name="think-agent" platform="claude">
----
-
-## Think Agent — Model Convention
-
-<context name="think-agent">
-
-A `think` agent exists at `~/.claude/agents/think.md` for deep strategic reasoning.
+For deep strategic analysis, architectural tradeoffs, or challenging a hypothesis, don't reason it out on the default model — route it to the strongest available model instead.
 
 </context>
 
 <trigger>
 
-**When to invoke it:** When the user says "think about X", asks for strategic analysis, wants tradeoffs evaluated, or needs a hypothesis challenged.
+**When to invoke it:** the user says "think about X", asks for strategic analysis, wants tradeoffs evaluated, or needs a hypothesis challenged.
 
 </trigger>
 
 <rule name="think-model">
 
-**Always invoke it with `model: "opus"`** via the Agent tool:
+**Use `eval`'s stateless helpers with `model: "slow"`:**
 ```
-Agent({
-  subagent_type: "general-purpose",
-  model: "opus",
-  description: "think: <topic>",
-  prompt: "<read ~/.claude/agents/think.md and append the user's question>"
-})
+completion(prompt, model="slow")     # oneshot, no tools
+agent(prompt, model="slow")          # oneshot, tools + full agent loop
 ```
 
-This keeps the main session on Sonnet (cheap, fast) while routing deep analysis through Opus (premium reasoning). The user doesn't need to switch models manually.
+Keeps the interactive session on the default model (cheap, fast) while routing deep analysis through the most capable model. Report back the conclusion, not a transcript of the routing.
 
 </rule>
 </section>

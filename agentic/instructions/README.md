@@ -1,7 +1,9 @@
 # instructions — XML instruction compiler
 
-Single source of truth for AI tool system prompts. One `base.xml` compiles to
-platform-specific markdown for every supported tool.
+Single source of truth for the agent system prompt. One `base.xml` compiles
+to `~/.omp/agent/AGENTS.md`. The compiler still supports multiple platforms
+(head/section/fork tags carry a `platform` attribute) in case another AI tool
+needs a divergent copy later; today only `omp` is wired up.
 
 ## Files
 
@@ -16,18 +18,14 @@ platform-specific markdown for every supported tool.
 
 | Platform | Target |
 |----------|--------|
-| `copilot` | `~/.copilot/copilot-instructions.md` |
-| `claude`  | `~/.claude/CLAUDE.md` |
-| `omp`     | `~/.omp/agent/AGENTS.md` |
+| `omp` | `~/.omp/agent/AGENTS.md` |
 
 Called automatically by `skills-stow`. Run manually:
 
 ```bash
-instructions-build            # write all targets (idempotent)
-instructions-build --check    # dry-run diff; exit 1 if any target would change
-instructions-build --stdout copilot   # print copilot output to stdout
-instructions-build --stdout claude    # print claude output to stdout
-instructions-build --stdout omp       # print omp output to stdout
+instructions-build              # write the target (idempotent)
+instructions-build --check      # dry-run diff; exit 1 if the target would change
+instructions-build --stdout omp # print compiled output to stdout
 ```
 
 ## XML format
@@ -42,8 +40,8 @@ Rendered once, at the top of the output file. Only the first matching head is
 used.
 
 ```xml
-<head platform="copilot">
-# Copilot Instructions
+<head platform="omp">
+# Agent Instructions
 </head>
 ```
 
@@ -53,7 +51,7 @@ A block of instruction content. Sections are emitted in declaration order,
 separated by blank lines.
 
 ```xml
-<section name="code-rules" platform="all">
+<section name="code-rules" platform="omp">
 <rules>
 
 ## Code Changes
@@ -67,11 +65,11 @@ separated by blank lines.
 ### `<fork platform="...">`
 
 Inline platform switch within a section body. Use when most content is shared
-but a few lines differ.
+but a few lines differ across platforms.
 
 ```xml
-<fork platform="copilot">task(agent_type="general-purpose", ...)</fork>
-<fork platform="claude">Agent({type: "general-purpose", ...})</fork>
+<fork platform="omp">task(...)</fork>
+<fork platform="other-tool">Agent({...})</fork>
 ```
 
 ### `<tail platform="...">`
@@ -82,13 +80,11 @@ Like `<head>` but appended at the end. Useful for footers.
 
 | Value | Included in |
 |-------|-------------|
-| `all` | All three tools |
-| `copilot` | Copilot CLI only |
-| `claude` | Claude Code only! |
+| `all` | Every wired-up platform (currently just `omp`) |
 | `omp` | OMP only |
 
-Comma-separated values are also accepted: `platform="copilot,claude"` (same as
-`all`).
+Comma-separated values are also accepted: `platform="omp,other-tool"` (same
+effect as `all` while only `omp` is wired up).
 
 ## Adding/modifying content
 
