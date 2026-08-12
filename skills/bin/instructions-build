@@ -5,7 +5,7 @@ instructions-build — compile XML instruction fragments into per-tool markdown.
 Usage:
   instructions-build               # write both target files (idempotent)
   instructions-build --check       # dry-run; exit 1 if any target would change
-  instructions-build --stdout copilot|claude   # print one platform to stdout
+  instructions-build --stdout copilot|claude|omp   # print one platform to stdout
 """
 
 import sys
@@ -22,8 +22,9 @@ SOURCES_FILE    = DOTFILES_SKILLS / "sources"
 TARGETS = {
     "copilot": Path.home() / ".copilot" / "copilot-instructions.md",
     "claude":  Path.home() / ".claude"  / "CLAUDE.md",
+    "omp":     Path.home() / ".omp" / "agent" / "AGENTS.md",
 }
-PLATFORMS = ("copilot", "claude")
+PLATFORMS = ("copilot", "claude", "omp")
 
 # ---------------------------------------------------------------------------
 # Regex-based XML parser
@@ -266,7 +267,7 @@ def main() -> int:
     if "--stdout" in args:
         idx = args.index("--stdout")
         if idx + 1 >= len(args):
-            sys.exit("ERROR: --stdout requires a platform argument (copilot|claude)")
+            sys.exit("ERROR: --stdout requires a platform argument (copilot|claude|omp)")
         platform = args[idx + 1]
         if platform not in PLATFORMS:
             sys.exit(f"ERROR: unknown platform '{platform}'; choose from: {', '.join(PLATFORMS)}")

@@ -18,14 +18,16 @@ platform-specific markdown for every supported tool.
 |----------|--------|
 | `copilot` | `~/.copilot/copilot-instructions.md` |
 | `claude`  | `~/.claude/CLAUDE.md` |
+| `omp`     | `~/.omp/agent/AGENTS.md` |
 
 Called automatically by `skills-stow`. Run manually:
 
 ```bash
-instructions-build            # write both targets (idempotent)
+instructions-build            # write all targets (idempotent)
 instructions-build --check    # dry-run diff; exit 1 if any target would change
 instructions-build --stdout copilot   # print copilot output to stdout
 instructions-build --stdout claude    # print claude output to stdout
+instructions-build --stdout omp       # print omp output to stdout
 ```
 
 ## XML format
@@ -80,9 +82,10 @@ Like `<head>` but appended at the end. Useful for footers.
 
 | Value | Included in |
 |-------|-------------|
-| `all` | Both tools |
+| `all` | All three tools |
 | `copilot` | Copilot CLI only |
 | `claude` | Claude Code only! |
+| `omp` | OMP only |
 
 Comma-separated values are also accepted: `platform="copilot,claude"` (same as
 `all`).
