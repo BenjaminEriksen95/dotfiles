@@ -43,7 +43,7 @@ Before making assumptions about frameworks, DI patterns, architecture, or toolin
   <section name="economy" platform="omp">
 ## Economy
 
-Input tokens are ~99.5% of session cost — output is negligible. Before every response: load only what is needed, avoid subagents for simple lookups, and match model to task. Keep context lean and responses tight.
+Input tokens are ~99.5% of session cost — output is negligible. Before every response: load only what is needed and match model to task. Keep context lean and responses tight.
 
 <rules name="economy-responses">
 - No preamble or filler ("Certainly!", "Great question"); no closing summary unless asked.
@@ -62,12 +62,6 @@ Input tokens are ~99.5% of session cost — output is negligible. Before every r
 - Search with narrow patterns before loading files — each file adds tokens to every subsequent call.
 - Read only the relevant section of a large file, never the whole file when a part will do.
 - Do not re-read files already in context.
-</rules>
-
-<rules name="economy-sub-agents">
-- Delegate to sub-agents only when genuine parallelism is needed — not for single lookups.
-- Don't delegate research that's completable in a handful of direct tool calls.
-- Prefer synchronous delegation; avoid background agents that spawn further tool chains unnecessarily.
 </rules>
 </section>
 
