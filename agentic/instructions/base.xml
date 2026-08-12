@@ -61,13 +61,20 @@ Available agents: `ticket-bootstrap`, `task-wrapup`, `think`, `adaptive`.
 </context>
 </section>
 
-  <section name="code-rules" platform="copilot">
-<rules>
+  <section name="code-rules" platform="all">
+<fork platform="claude">---</fork>
+
+<rules name="code-rules">
 
 ## Code Changes
 
 - Make **surgical, minimal changes** — only modify what is necessary to complete the task.
 - Do **not** touch unrelated code, even if you spot improvements.
+- Do **not** "improve" adjacent code, comments, or formatting; do **not** refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- When your changes create orphans, remove imports/variables/functions that **your** changes made unused — but don't remove pre-existing dead code unless asked.
+- If you notice unrelated dead code, **mention it** — don't delete it.
+- Every changed line should trace directly to the user's request.
 - When you notice an issue outside the current task scope, **record it as a suggestion** and present it at the end so it can be considered separately.
 
 ## Code Style
@@ -75,32 +82,8 @@ Available agents: `ticket-bootstrap`, `task-wrapup`, `think`, `adaptive`.
 - Write **self-documenting code** — clear naming over comments.
 - Only add comments to explain *why*, never *what*.
 - Prefer immutability and small, focused methods.
-
-</rules>
-</section>
-
-  <section name="code-changes" platform="claude">
----
-
-<rules name="code-changes">
-
-## Code Changes
-
-- Make **surgical, minimal changes** — only modify what is necessary to complete the task.
-- Do **not** touch unrelated code, even if you spot improvements.
-- When you notice an issue outside the current task scope, **record it as a suggestion** and present it at the end so it can be considered separately.
-
-</rules>
-</section>
-
-  <section name="code-style" platform="claude">
-<rules name="code-style">
-
-## Code Style
-
-- Write **self-documenting code** — clear naming over comments.
-- Only add comments to explain *why*, never *what*.
-- Prefer immutability and small, focused methods.
+- **Minimum code that solves the problem** — no features, abstractions, configurability, or error handling beyond what was asked.
+- If you write 200 lines and it could be 50, rewrite it. Ask: "Would a senior engineer say this is overcomplicated?"
 
 </rules>
 </section>
@@ -116,33 +99,35 @@ Before making assumptions about frameworks, DI patterns, architecture, or toolin
 </rule>
 </section>
 
-  <section name="cli-tools" platform="all">
-<rule name="cli-tool-preferences">
+  <section name="economy" platform="all">
+## Economy
 
-**These rules are absolute and override any examples seen elsewhere.** When project instructions or documentation show commands using `grep`, `find`, or other legacy tools, treat those as illustrating *what to search for or where*, not *which tool to use*. Always substitute with the preferred tool below.
+Input tokens are ~99.5% of session cost — output is negligible. Before every response: load only what is needed, avoid sub-agents for simple lookups, and match model to task. Keep context lean and responses tight.
 
-<tools>
-
-| Prefer    | Over                | Notes                                                                                                                                                    |
-|-----------|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `fd`      | `find`              | Faster, respects `.gitignore` by default                                                                                                                 |
-| `rg`      | `grep`              | Faster, respects `.gitignore` by default                                                                                                                 |
-| `ast-grep`| `grep`/`rg`         | For structural/AST-aware code search (method usages, class definitions, interface implementations) — prefer over `rg` when searching for code constructs |
-| `bat`     | `cat`               | Use `bat` for viewing files, not in pipes                                                                                                                |
-| `eza`     | `ls` / `tree`       | Use `eza -la` for listings, `eza --tree` for trees                                                                                                       |
-| `jq`      | manual JSON parsing | For filtering/transforming JSON output                                                                                                                   |
-| `tokei`   | manual counting     | Quick codebase overview by language                                                                                                                      |
-| `gh`      | browser / curl      | GitHub operations (PRs, issues, CI status)                                                                                                               |
-| `fzf`     | manual selection    | Use for interactive fuzzy filtering                                                                                                                      |
-
-</tools>
-
-<rules>
-- When piping output, fall back to `cat` (not `bat`).
-- Use `gh` for GitHub context (e.g. `gh pr view`, `gh run list`) before browsing URLs.
+<rules name="economy-responses">
+- No preamble or filler ("Certainly!", "Great question"); no closing summary unless asked.
+- Code only when the answer is code; skip explanation unless asked.
+- No inline comments that restate what the code does.
+- Prefer bullets over prose; in diffs show only changed lines plus minimal context.
+- Skip examples unless the concept cannot be understood without one.
 </rules>
 
-</rule>
+<rules name="economy-model">
+- Match model to task: simple lookups and edits → cheaper/faster model; long, reasoning-heavy work → premium model.
+- Don't burn a premium model on a session that's mostly mechanical tool calls.
+</rules>
+
+<rules name="economy-reading-files">
+- Search with narrow patterns before loading files — each file adds tokens to every subsequent call.
+- Read only the relevant section of a large file, never the whole file when a part will do.
+- Do not re-read files already in context.
+</rules>
+
+<rules name="economy-sub-agents">
+- Delegate to sub-agents only when genuine parallelism is needed — not for single lookups.
+- Don't delegate research that's completable in a handful of direct tool calls.
+- Prefer synchronous delegation; avoid background agents that spawn further tool chains unnecessarily.
+</rules>
 </section>
 
   <section name="editor-context" platform="all">
@@ -228,7 +213,7 @@ A self-assembling general-purpose agent that replaces hard-coded specialized age
 3. **Load** — reads only the relevant reference files in parallel
 4. **Execute** — does the work with assembled context
 
-**Default for Jira work** — whenever the user mentions a ticket key, always delegate to the adaptive agent rather than handling inline. It bootstraps `bd` + branch conventions automatically on every run.
+**Default for Jira work** — whenever the user mentions a ticket key, always delegate to the adaptive agent rather than handling inline. It sets up branch conventions automatically on every run.
 
 Use for any complex multi-step task that benefits from project-specific knowledge. Knowledge stays in skills; agents stay thin.
 
@@ -270,23 +255,15 @@ Fetch the Jira ticket details
 </step>
 
 <step order="2">
-Check for / create a `bd` epic linked to the ticket
-</step>
-
-<step order="3">
 Derive and create the git branch
 </step>
 
-<step order="4">
+<step order="3">
 Claim the task
 </step>
 
-<step order="5">
-Return a handoff summary
-</step>
-
 Wait for the handoff summary, then continue the work in the main session using that context.
-Do not propose a branch name or create bd tasks manually — the bootstrap agent handles it.
+Do not propose a branch name — the bootstrap agent handles it.
 
 </workflow>
 </section>
@@ -310,7 +287,7 @@ Agent({
 ```
 
 Wait for the handoff summary, then continue the work in the main session using that context.
-Do not propose a branch name or create bd tasks manually — the bootstrap agent handles it.
+Do not propose a branch name — the bootstrap agent handles it.
 
 </workflow>
 </section>
@@ -330,14 +307,10 @@ task(agent_type="general-purpose", name="task-wrapup", mode="background",
 ```
 
 <step order="1">
-Close bd subtasks and update the epic
-</step>
-
-<step order="2">
 Create or update the PR (idempotent)
 </step>
 
-<step order="3">
+<step order="2">
 Load and execute any scope/type-specific extensions
 </step>
 
@@ -346,7 +319,7 @@ Return a handoff summary
 </step>
 
 Wait for the handoff summary, then relay results to the user.
-Do not manually create PRs or close bd tasks — the wrap-up agent handles it.
+Do not manually create PRs — the wrap-up agent handles it.
 
 </workflow>
 </section>
@@ -370,160 +343,20 @@ Agent({
 ```
 
 Wait for the handoff summary, then relay results to the user.
-Do not manually create PRs or close bd tasks — the wrap-up agent handles it.
+Do not manually create PRs — the wrap-up agent handles it.
 
 </workflow>
 </section>
 
-  <section name="bd-discovery" platform="all">
----
 
-## Task Discovery with `bd` (Beads)
-
-<workflow name="bd-discovery">
-
-Always check bd when beginning any work session or when handed a ticket:
-
-```bash
-bd ready              # unblocked tasks — start here
-bd list               # all open issues
-bd list --priority 1  # high-priority only
-bd show <id>          # task details + audit trail
-bd epic status        # epic completion overview
-bd prime              # AI-optimised full context dump
-```
-
-<rules>
-
-- **`bd ready`** is the default entry point — it shows only tasks whose dependencies are resolved.
-- Use `bd prime` at the start of a session to get a structured overview of all active work.
-- **Before starting a task**, claim it: `bd update <id> --claim` — atomically sets assignee + in_progress.
-- **When a task is done**, close it: `bd close <id>` — but use judgement; <fork platform="copilot">some tasks (e.g. epics, parent tasks) are better closed once the broader work lands (PR merged, branch deployed)</fork><fork platform="claude">epics close when PR merges</fork>.
-- In work repos, epics link to Jira via `--external-ref jira-AP-XXXX` — check Jira for acceptance criteria and context.
-- In personal repos, beads titles are the source of truth.
-
-</rules>
-
-</workflow>
-</section>
-
-  <section name="communication" platform="copilot">
-## Communication
-
-<rules>
-
-- Be concise. Skip preamble and filler phrases.
-- When presenting multiple options, lead with the recommended one.
-- Surface spotted-but-out-of-scope issues as a **"Suggestions for later"** section at the end of a response, not inline.
-
-</rules>
-
-<context name="conversational-style">
-
-### Conversational Style (chat output only)
-
-For conversational replies — explanations, recommendations, status updates, Q&A — prefer a telegraphic style:
-
-- Drop articles ("the", "a", "an") and auxiliaries ("is", "are", "will be") where meaning stays unambiguous.
-- Lead with the answer; omit hedging, throat-clearing, and recap of the question.
-- Keep technical terms, identifiers, file paths, commands, and proper nouns **exact** — never compress these.
-- One idea per line or short bullet. Tables over prose for comparisons.
-
-</context>
-
-<rules>
-
-**Do NOT apply this style to:**
-- Code, comments, commit messages, PR descriptions, or PR review comments
-- Documentation files (`*.md`, docstrings, READMEs)
-- Anything written *into* a file via `create` or `edit`
-- Anything sent to another human (Slack drafts, email drafts, Jira tickets)
-
-**Auto-revert to full prose when:**
-- Warning about destructive or irreversible actions (deletes, force pushes, drops, prod deploys)
-- Asking for confirmation before a side-effect
-- Walking through a multi-step sequence where order or precision matters
-- The user asks for clarification or repeats a question
-
-Resume telegraphic style after the cautious part is done.
-
-</rules>
-
-<workflow name="request-normalization">
-
-## Request Normalization for Implementation Tasks
-
-When a user asks you to implement something, formulate their request in the following structured template and ask for confirmation before proceeding:
-
-```
-<task>
-What you are asked to do (concise, action-oriented)
-</task>
-
-<context>
-Background information the task needs (project state, related work, decisions already made)
-</context>
-
-<constraints>
-Any limits or rules (scope boundaries, what not to change, performance limits, compatibility requirements)
-</constraints>
-
-<output_format>
-How the result should be delivered (code files, documentation, both, format of changes, success criteria)
-</output_format>
-```
-
-**When to normalize:**
-- Any request asking for code changes, feature implementation, or architectural work
-- Any `bd` (beads) task when discussing implementation approach
-- Any multi-step work where clarifying assumptions will improve accuracy
-
-**How to ask for confirmation:**
-Present the normalized template, then ask:
-> "Is this understanding correct? Anything to adjust before I start?"
-
-**When to skip normalization:**
-- Simple questions (explanations, recommendations, why/how questions)
-- Single-file edits where the task is obvious
-- Follow-ups within an active implementation (user is already engaged)
-
-**For bd tasks specifically:**
-When the user mentions a beads ID or epic, normalize the task description including:
-- What the task is (extracted from bd show output)
-- Acceptance criteria (from linked Jira ticket if applicable)
-- Dependencies (from bd dependencies)
-- Constraints (time estimate, scope limits, deployment considerations)
-
-</workflow>
-
-<example name="conversational-transformation">
-
-**Examples:**
-
-Normal prose → telegraphic:
-- *"The component is re-rendering because you're creating a new object reference on each render. You should wrap it in `useMemo` to fix this."*
-  → *"New object ref each render → re-render. Wrap in `useMemo`."*
-- *"I think the issue is probably caused by the cache not being invalidated when the user logs out."*
-  → *"Cache not invalidated on logout."*
-- *"Let me know if you'd like me to also update the tests."*
-  → *"Want me to update tests too?"*
-
-Auto-revert (stay in full prose):
-- *"⚠ This will force-push to `main` and overwrite the remote history for all collaborators. Confirm before I proceed?"*
-- *"Before running this, make sure you have a backup of the `users` table — the migration drops and recreates it."*
-
-</example>
-</section>
-
-  <section name="communication" platform="claude">
----
+  <section name="communication" platform="all">
+<fork platform="claude">---</fork>
 
 ## Communication
 
 <rules name="communication">
 
-- Be concise. Skip preamble and filler phrases.
-- When presenting multiple options, lead with the recommended one.
+- Lead with the answer; when presenting multiple options, lead with the recommended one.
 - Surface spotted-but-out-of-scope issues as a **"Suggestions for later"** section at the end of a response, not inline.
 
 </rules>
@@ -559,11 +392,11 @@ Resume telegraphic style after the cautious part is done.
 
 </rules>
 
-<workflow name="request-normalization">
+<workflow name="problem-statement">
 
-## Request Normalization for Implementation Tasks
+## Problem Statement (PS) for Implementation Tasks
 
-When a user asks you to implement something, formulate their request in the following structured template and ask for confirmation before proceeding:
+When a user asks you to implement something, create a two-stage Problem Statement instead of jumping straight into the work. "Request normalization" means drafting a PS.
 
 ```
 <task>
@@ -583,9 +416,19 @@ How the result should be delivered (code files, documentation, both, format of c
 </output_format>
 ```
 
-**When to normalize:**
+**Stage 1 — Early PS:**
+- Draft it from user-provided information only.
+- It is fine to make reasonable assumptions instead of asking questions by default.
+- Include assumptions that still require investigation inside `<constraints>` or `<context>`, whichever fits best.
+- Present the Early PS quickly so the user can interrupt or correct direction.
+
+**Stage 2 — Complete PS:**
+- Investigate relevant code, prompts, docs, or workflow context with the purpose of writing a fuller PS, not implementing yet.
+- Rewrite the PS with validated context, updated assumptions, open unknowns, and plausible solution or investigation directions.
+- Surface branching points when multiple reasonable approaches exist so the user can validate direction before implementation.
+
+**When to use a PS:**
 - Any request asking for code changes, feature implementation, or architectural work
-- Any `bd` task when discussing implementation approach
 - Any multi-step work where clarifying assumptions will improve accuracy
 
 **When to skip normalization:**
@@ -593,46 +436,36 @@ How the result should be delivered (code files, documentation, both, format of c
 - Single-file edits where the task is obvious
 - Follow-ups within an active implementation (user is already engaged)
 
-**How to ask for confirmation:**
-Present the normalized template, then ask:
-> "Is this understanding correct? Anything to adjust before I start?"
+**Clarifying questions:**
+- Ask only when ambiguity blocks a usable PS or the user explicitly wants clarification.
+- Otherwise prefer reasonable assumptions that the user can correct.
 
-</workflow>
+**Before implementation:**
+- Present the Complete PS and let the user correct it if needed.
+- If the user corrects direction, update the PS instead of defending the previous draft.
+- Only move into code changes after the Complete PS is settled or the user explicitly wants to skip further framing.
+
+
+<example name="conversational-transformation">
+
+**Examples:**
+
+Normal prose → telegraphic:
+- *"The component is re-rendering because you're creating a new object reference on each render. You should wrap it in `useMemo` to fix this."*
+  → *"New object ref each render → re-render. Wrap in `useMemo`."*
+- *"I think the issue is probably caused by the cache not being invalidated when the user logs out."*
+  → *"Cache not invalidated on logout."*
+- *"Let me know if you'd like me to also update the tests."*
+  → *"Want me to update tests too?"*
+
+Auto-revert (stay in full prose):
+- *"⚠ This will force-push to `main` and overwrite the remote history for all collaborators. Confirm before I proceed?"*
+- *"Before running this, make sure you have a backup of the `users` table — the migration drops and recreates it."*
+
+</example>
 </section>
-
-  <section name="systems-thinking" platform="copilot">
-## Systems Thinking
-
-<context name="design-lenses">
-
-Software work increasingly *is* system design — composing agents, skills, services, workflows — not just writing code. Default lenses to apply when reasoning about any non-trivial change:
-
-- **Loops, not lines.** Production issues are usually feedback loops (retry storms, cache staleness, agent context drift, queue blow-ups) — not single failures. Identify what amplifies and what dampens before patching the symptom.
-- **Boundaries are where bugs live.** Most defects sit on interfaces between components, not inside them. Be explicit about where one system's responsibility ends and the next begins.
-- **Throughput = slowest stage.** Optimising anywhere except the bottleneck is wasted effort. In agentic work the bottleneck is usually context budget or human attention, not compute.
-- **Second-order effects.** Every change introduces new behaviour. Cache trades latency for staleness; agent trades throughput for traceability; retry trades reliability for load. Name the trade explicitly when proposing a change.
-- **Leverage points (Meadows ladder).** Prefer high-leverage changes: paradigm > goals > rules > parameters > constants. Tuning a constant rarely fixes a structural problem.
-- **Observability before optimisation.** Cannot reason about a system you cannot see. If a behaviour matters, instrument it before tuning it.
-- **Stocks accumulate; flows are what you control.** Queues, technical debt, agent context, open PRs, half-built migrations — watch what builds up. The stock is the symptom; flow imbalance is the cause.
-
-</context>
-
-<decision>
-
-When designing or changing an agent / skill / workflow, ask:
-*what loops does this create or break? what becomes the new bottleneck? what's the second-order effect on neighbouring systems?*
-
-</decision>
-
-<note>
-
-For deep strategic analysis, the **`think` agent** plus the Strategist / Consequentialist / First-Principles personas encode parts of this lens — invoke them when systems thinking needs to be the *whole job* rather than a default backdrop.
-
-</note>
-</section>
-
-  <section name="systems-thinking" platform="claude">
----
+  <section name="systems-thinking" platform="all">
+<fork platform="claude">---</fork>
 
 ## Systems Thinking
 
@@ -656,6 +489,86 @@ When designing or changing an agent / skill / workflow, ask:
 *What loops does this create or break? What becomes the new bottleneck? What's the second-order effect on neighbouring systems?*
 
 </decision>
+
+<note>
+
+For deep strategic analysis, the **`think` agent** plus the Strategist / Consequentialist / First-Principles personas encode parts of this lens — invoke them when systems thinking needs to be the *whole job* rather than a default backdrop.
+
+</note>
+</section>
+
+  <section name="hypothesis-driven" platform="all">
+<fork platform="claude">---</fork>
+
+## Hypothesis-Driven Problem Solving
+
+<rule name="hypothesis-loop">
+
+When facing uncertainty — debugging, design exploration, unfamiliar code, ambiguous requirements — reason via an explicit loop rather than guess-and-check:
+
+**Hypothesis → Prediction → Test → Evidence → Update**
+
+1. State what you believe to be true and *why*.
+2. Derive a falsifiable prediction: "if H is correct, I should observe X."
+3. Run the smallest test that confirms or refutes.
+4. Record what you actually observed — evidence, not narrative.
+5. Update your model (not just your next guess) and iterate or exit.
+
+Stop when: hypothesis confirmed with evidence, problem resolved, or three iterations without new signal (escalate or reframe).
+
+For the full protocol with SQL tracking and worked examples, load the `assumption-tree-builder` skill's `hypothesis-loop` reference.
+
+</rule>
+</section>
+
+  <section name="execution-discipline" platform="all">
+<fork platform="claude">---</fork>
+
+## Execution Discipline
+
+<context name="karpathy-guidelines">
+
+Adapted from [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md) — behavioral guidelines to reduce common LLM coding mistakes. Biases toward caution over speed; use judgment on trivial tasks.
+
+</context>
+
+### Think Before Coding
+
+<rule name="think-before-coding">
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+</rule>
+
+### Goal-Driven Execution
+
+<rule name="goal-driven-execution">
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan with verification at each step:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+</rule>
 </section>
 
   <section name="think-agent" platform="copilot">

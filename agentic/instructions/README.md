@@ -53,7 +53,7 @@ A block of instruction content. Sections are emitted in declaration order,
 separated by blank lines.
 
 ```xml
-<section name="code-rules" platform="copilot">
+<section name="code-rules" platform="all">
 <rules>
 
 ## Code Changes

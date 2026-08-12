@@ -106,8 +106,15 @@ bindkey -s '^f' 'yazi\n'
 export XDG_CONFIG_HOME="$HOME/.config"
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+_load_nvm() {
+  unset -f nvm node npm npx
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+}
+nvm()  { _load_nvm; nvm  "$@"; }
+node() { _load_nvm; node "$@"; }
+npm()  { _load_nvm; npm  "$@"; }
+npx()  { _load_nvm; npx  "$@"; }
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
@@ -137,4 +144,23 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 # Global skills orchestrator
-export PATH="$HOME/dotfiles/skills/bin:$PATH"
+export PATH="$HOME/dotfiles/agentic/bin:$PATH"
+
+eval "$(omp completions zsh)"
+
+# Athens (personal PM hub)
+export ATHENS_DATABASE_URL='host=localhost port=5432 user=athens password=athens dbname=athens'
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+fpath=(~/.grok/completions/zsh $fpath)
+autoload -Uz compinit && compinit -C
+# <<< grok installer <<<
+
+# Graphify: auto-symlink .graphifyignore into new worktrees
+# Uncomment to enable:
+# gwt() {
+#   git worktree add "$@"
+#   local wt_path="${@[-1]}"
+#   [[ -d "$wt_path" ]] && ln -sf ~/git/components/.graphifyignore "$wt_path/.graphifyignore"
+# }

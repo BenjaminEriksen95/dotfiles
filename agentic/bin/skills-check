@@ -15,8 +15,8 @@ declare -A skill_seen
 
 check_cross_source_dupes() {
   local src="$1"
-  # shared → both targets
-  for target_key in copilot claude; do
+  # shared → all targets
+  for target_key in copilot claude gemini pi; do
     local skills_dir="$src/shared/skills"
     [[ -d "$skills_dir" ]] || continue
     for skill_path in "$skills_dir"/*/; do
@@ -63,22 +63,60 @@ check_cross_source_dupes() {
       fi
     done
   fi
+
+  # gemini-specific
+  local gemini_dir="$src/gemini/skills"
+  if [[ -d "$gemini_dir" ]]; then
+    for skill_path in "$gemini_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      local key="gemini:$name"
+      if [[ -n "${skill_seen[$key]+_}" ]]; then
+        err "Cross-source duplicate [gemini]: skill '$name' in both '${skill_seen[$key]}' and '$src'"
+        conflicts=$((conflicts + 1))
+      else
+        skill_seen[$key]="$src"
+      fi
+    done
+  fi
+
+  # pi-specific
+  local pi_dir="$src/pi/skills"
+  if [[ -d "$pi_dir" ]]; then
+    for skill_path in "$pi_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      local key="pi:$name"
+      if [[ -n "${skill_seen[$key]+_}" ]]; then
+        err "Cross-source duplicate [pi]: skill '$name' in both '${skill_seen[$key]}' and '$src'"
+        conflicts=$((conflicts + 1))
+      else
+        skill_seen[$key]="$src"
+      fi
+    done
+  fi
+}
+
+# Returns 0 if $1 is a stow-managed skill dir (SKILL.md is a symlink), 1 otherwise.
+is_stow_managed() {
+  local skill_dir="$1"
+  [[ -L "$skill_dir/SKILL.md" ]]
 }
 
 check_target_collisions() {
   local src="$1"
   local skills_dir target existing
 
-  # shared → both targets
+  # shared → all targets
   skills_dir="$src/shared/skills"
   if [[ -d "$skills_dir" ]]; then
     for skill_path in "$skills_dir"/*/; do
       [[ -d "$skill_path" ]] || continue
       local name; name="$(basename "$skill_path")"
-      for target in "$COPILOT_TARGET/skills" "$CLAUDE_TARGET/skills"; do
+      for target in "$COPILOT_TARGET/skills" "$CLAUDE_TARGET/skills" "$GEMINI_TARGET/skills" "$PI_TARGET/skills"; do
         existing="$target/$name"
-        if [[ -e "$existing" && ! -L "$existing" ]]; then
-          err "Target collision: '$existing' is a real directory (not a symlink); would block stow of '$name' from '$src'"
+        if [[ -e "$existing" && ! -L "$existing" ]] && ! is_stow_managed "$existing"; then
+          err "Target collision: '$existing' is a real directory (not stow-managed); would block stow of '$name' from '$src'"
           conflicts=$((conflicts + 1))
         fi
       done
@@ -92,8 +130,8 @@ check_target_collisions() {
       [[ -d "$skill_path" ]] || continue
       local name; name="$(basename "$skill_path")"
       existing="$COPILOT_TARGET/skills/$name"
-      if [[ -e "$existing" && ! -L "$existing" ]]; then
-        err "Target collision [copilot]: '$existing' is a real directory; would block stow of '$name' from '$src'"
+      if [[ -e "$existing" && ! -L "$existing" ]] && ! is_stow_managed "$existing"; then
+        err "Target collision [copilot]: '$existing' is a real directory (not stow-managed); would block stow of '$name' from '$src'"
         conflicts=$((conflicts + 1))
       fi
     done
@@ -106,8 +144,36 @@ check_target_collisions() {
       [[ -d "$skill_path" ]] || continue
       local name; name="$(basename "$skill_path")"
       existing="$CLAUDE_TARGET/skills/$name"
-      if [[ -e "$existing" && ! -L "$existing" ]]; then
-        err "Target collision [claude]: '$existing' is a real directory; would block stow of '$name' from '$src'"
+      if [[ -e "$existing" && ! -L "$existing" ]] && ! is_stow_managed "$existing"; then
+        err "Target collision [claude]: '$existing' is a real directory (not stow-managed); would block stow of '$name' from '$src'"
+        conflicts=$((conflicts + 1))
+      fi
+    done
+  fi
+
+  # gemini-specific
+  skills_dir="$src/gemini/skills"
+  if [[ -d "$skills_dir" ]]; then
+    for skill_path in "$skills_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      existing="$GEMINI_TARGET/skills/$name"
+      if [[ -e "$existing" && ! -L "$existing" ]] && ! is_stow_managed "$existing"; then
+        err "Target collision [gemini]: '$existing' is a real directory (not stow-managed); would block stow of '$name' from '$src'"
+        conflicts=$((conflicts + 1))
+      fi
+    done
+  fi
+
+  # pi-specific
+  skills_dir="$src/pi/skills"
+  if [[ -d "$skills_dir" ]]; then
+    for skill_path in "$skills_dir"/*/; do
+      [[ -d "$skill_path" ]] || continue
+      local name; name="$(basename "$skill_path")"
+      existing="$PI_TARGET/skills/$name"
+      if [[ -e "$existing" && ! -L "$existing" ]] && ! is_stow_managed "$existing"; then
+        err "Target collision [pi]: '$existing' is a real directory (not stow-managed); would block stow of '$name' from '$src'"
         conflicts=$((conflicts + 1))
       fi
     done
@@ -130,5 +196,6 @@ else
   err "  - renaming conflicting skill in one source, or"
   err "  - moving the real target dir aside (e.g. mv <dir> <dir>.bak), or"
   err "  - using skills-adopt to absorb tool-managed skills into a source"
+  err "  Note: real dirs with a symlinked SKILL.md are stow-managed and are OK."
   exit 1
 fi

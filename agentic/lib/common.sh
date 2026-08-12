@@ -7,6 +7,8 @@ SOURCES_FILE="$SKILLS_DIR/sources"
 
 COPILOT_TARGET="$HOME/.copilot"
 CLAUDE_TARGET="$HOME/.claude"
+GEMINI_TARGET="$HOME/.gemini"
+PI_TARGET="$HOME/.pi/agent"
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -54,7 +56,7 @@ validate_source() {
     return 1
   fi
   local found=0
-  for pkg in shared copilot claude; do
+  for pkg in shared copilot claude gemini pi; do
     [[ -d "$src/$pkg" ]] && found=1 && break
   done
   if [[ "$found" -eq 0 ]]; then

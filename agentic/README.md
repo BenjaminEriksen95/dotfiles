@@ -1,6 +1,6 @@
 # Skills Orchestrator
 
-Global multi-source skill manager for GitHub Copilot CLI and Claude Code.
+Global multi-source skill manager for GitHub Copilot CLI, Claude Code, Gemini CLI, and pi.
 Reads source repos from [`sources`](sources), runs conflict checks, and
 stows each source's packages into the right tool directories via GNU stow.
 
@@ -8,8 +8,9 @@ stows each source's packages into the right tool directories via GNU stow.
 sources file
   ~/git/personal/skills  ─┐
   ~/git/work/skills  ─────┼──► skills-stow ──► ~/.copilot/skills/
-  ~/git/other/skills  ────┘              └──► ~/.claude/skills/
-                                              ~/.copilot/agents/
+  ~/git/other/skills  ────┘              ├──► ~/.claude/skills/
+                                        ├──► ~/.gemini/skills/
+                                        └──► ~/.pi/agent/skills/
 ```
 
 ---
@@ -19,7 +20,7 @@ sources file
 Add the `bin/` directory to your PATH. In `~/.zshrc` (or wherever your shell config lives):
 
 ```zsh
-export PATH="$HOME/dotfiles/skills/bin:$PATH"
+export PATH="$HOME/dotfiles/agentic/bin:$PATH"
 ```
 
 Then reload: `source ~/.zshrc` (or open a new shell).
@@ -52,16 +53,21 @@ Each source must follow the stow-package convention:
 ```
 <source>/
   shared/
-    skills/      ← stowed to both ~/.copilot/skills/ and ~/.claude/skills/
+    skills/      ← stowed to ~/.copilot/skills/, ~/.claude/skills/,
+                   ~/.gemini/skills/, and ~/.pi/agent/skills/
   copilot/
     agents/      ← stowed to ~/.copilot/agents/
     skills/      ← stowed to ~/.copilot/skills/ (copilot-only)
   claude/
     skills/      ← stowed to ~/.claude/skills/ (claude-only)
+  gemini/
+    skills/      ← stowed to ~/.gemini/skills/ (gemini-only)
+  pi/
+    skills/      ← stowed to ~/.pi/agent/skills/ (pi-only)
 ```
 
 1. Create / clone the repo.
-2. Add its path to `~/dotfiles/skills/sources` (one path per line; `~` expands).
+2. Add its path to `~/dotfiles/agentic/sources` (one path per line; `~` expands).
 3. Run `skills-stow`.
 
 ---
@@ -119,8 +125,12 @@ skills-adopt autoplan --to ~/git/work/skills --scope shared
 
 ## Stow package → target mapping
 
-| Package | Target (copilot) | Target (claude) |
-|---|---|---|
-| `shared` | `~/.copilot` | `~/.claude` (INDEX.md and README.md excluded) |
-| `copilot` | `~/.copilot` | — |
-| `claude` | — | `~/.claude` |
+| Package | Copilot | Claude | Gemini | Pi |
+|---|---|---|---|---|
+| `shared` | `~/.copilot` | `~/.claude`\* | `~/.gemini`\* | `~/.pi/agent`\* |
+| `copilot` | `~/.copilot` | — | — | — |
+| `claude` | — | `~/.claude` | — | — |
+| `gemini` | — | — | `~/.gemini` | — |
+| `pi` | — | — | — | `~/.pi/agent` |
+
+\* INDEX.md and README.md excluded to avoid clobbering tool-managed files.
