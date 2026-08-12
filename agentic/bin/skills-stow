@@ -20,7 +20,7 @@ stow_pkg() {
   local extra=("$@")
   mkdir -p "$target"
   log "  stow $pkg  →  $target"
-  stow --restow "${extra[@]}" -d "$src" -t "$target" "$pkg"
+  stow --restow --no-folding "${extra[@]}" -d "$src" -t "$target" "$pkg"
 }
 
 # Process each source
@@ -28,11 +28,15 @@ while IFS= read -r src; do
   validate_source "$src" || continue
   log "Processing source: $src"
 
-  # shared → both tools (exclude INDEX.md and README.md for claude to avoid
-  # clobbering Claude-managed files that may exist at that level)
+  # shared → all tools (exclude INDEX.md and README.md for non-copilot targets
+  # to avoid clobbering tool-managed files that may exist at that level)
   if [[ -d "$src/shared" ]]; then
     stow_pkg shared "$src" "$COPILOT_TARGET"
     stow_pkg shared "$src" "$CLAUDE_TARGET" \
+      --ignore='INDEX\.md' --ignore='README\.md'
+    stow_pkg shared "$src" "$GEMINI_TARGET" \
+      --ignore='INDEX\.md' --ignore='README\.md'
+    stow_pkg shared "$src" "$PI_TARGET" \
       --ignore='INDEX\.md' --ignore='README\.md'
   fi
 
@@ -45,6 +49,16 @@ while IFS= read -r src; do
   if [[ -d "$src/claude" ]]; then
     stow_pkg claude "$src" "$CLAUDE_TARGET"
   fi
+
+  # gemini-specific subtree
+  if [[ -d "$src/gemini" ]]; then
+    stow_pkg gemini "$src" "$GEMINI_TARGET"
+  fi
+
+  # pi-specific subtree
+  if [[ -d "$src/pi" ]]; then
+    stow_pkg pi "$src" "$PI_TARGET"
+  fi
 done < <(read_sources)
 
 echo ""
@@ -54,8 +68,12 @@ log "Compiling instruction files..."
 echo ""
 log "Done. Symlink spot-check:"
 for skill in tagify skill-builder; do
-  printf "  ~/.copilot/skills/%-25s → %s\n" "$skill" \
-    "$(readlink "$COPILOT_TARGET/skills/$skill" 2>/dev/null || echo '(not a symlink)')"
-  printf "  ~/.claude/skills/%-25s  → %s\n" "$skill" \
-    "$(readlink "$CLAUDE_TARGET/skills/$skill" 2>/dev/null || echo '(not a symlink)')"
+  printf "  ~/.copilot/skills/%-25s → %s\n" "$skill/SKILL.md" \
+    "$(readlink "$COPILOT_TARGET/skills/$skill/SKILL.md" 2>/dev/null || echo '(missing)')"
+  printf "  ~/.claude/skills/%-25s  → %s\n" "$skill/SKILL.md" \
+    "$(readlink "$CLAUDE_TARGET/skills/$skill/SKILL.md" 2>/dev/null || echo '(missing)')"
+  printf "  ~/.gemini/skills/%-25s  → %s\n" "$skill/SKILL.md" \
+    "$(readlink "$GEMINI_TARGET/skills/$skill/SKILL.md" 2>/dev/null || echo '(missing)')"
+  printf "  ~/.pi/agent/skills/%-20s → %s\n" "$skill/SKILL.md" \
+    "$(readlink "$PI_TARGET/skills/$skill/SKILL.md" 2>/dev/null || echo '(missing)')"
 done

@@ -66,7 +66,7 @@ fi
 if [[ -z "$TO" ]]; then
   TO="$(read_sources | head -1)"
   if [[ -z "$TO" ]]; then
-    err "No sources configured. Add a path to $(expand_path "~/dotfiles/skills/sources")."
+    err "No sources configured. Add a path to $(expand_path "~/dotfiles/agentic/sources")."
     exit 1
   fi
 fi
@@ -84,22 +84,33 @@ case "$SCOPE" in
 esac
 
 # ---------------------------------------------------------------------------
-# Find the real (non-symlink) skill directory in the target(s)
+# Find the real (non-symlink) skill directory in the target(s).
+# With --no-folding, stow creates real dirs; skill is tool-installed only if
+# SKILL.md is NOT a symlink (i.e. not stow-managed).
 # ---------------------------------------------------------------------------
+is_tool_installed() {
+  local dir="$1"
+  [[ -d "$dir" && ! -L "$dir" && ! -L "$dir/SKILL.md" ]]
+}
+
 find_real_skill() {
   local name="$1"
   local results=()
-  if [[ "$FROM" == "copilot" || "$FROM" == "both" ]]; then
+  if [[ "$FROM" == "copilot" || "$FROM" == "both" || "$FROM" == "all" ]]; then
     local p="$COPILOT_TARGET/skills/$name"
-    if [[ -d "$p" && ! -L "$p" ]]; then
-      results+=("$p")
-    fi
+    is_tool_installed "$p" && results+=("$p")
   fi
-  if [[ "$FROM" == "claude" || "$FROM" == "both" ]]; then
+  if [[ "$FROM" == "claude" || "$FROM" == "both" || "$FROM" == "all" ]]; then
     local p="$CLAUDE_TARGET/skills/$name"
-    if [[ -d "$p" && ! -L "$p" ]]; then
-      results+=("$p")
-    fi
+    is_tool_installed "$p" && results+=("$p")
+  fi
+  if [[ "$FROM" == "gemini" || "$FROM" == "all" ]]; then
+    local p="$GEMINI_TARGET/skills/$name"
+    is_tool_installed "$p" && results+=("$p")
+  fi
+  if [[ "$FROM" == "pi" || "$FROM" == "all" ]]; then
+    local p="$PI_TARGET/skills/$name"
+    is_tool_installed "$p" && results+=("$p")
   fi
   printf '%s\n' "${results[@]}"
 }
@@ -177,7 +188,8 @@ log "Running skills-stow to recreate symlinks..."
 "$SCRIPT_DIR/skills-stow"
 
 # Verify the symlink resolves to the new location
-for t in "$COPILOT_TARGET/skills/$SKILL_NAME" "$CLAUDE_TARGET/skills/$SKILL_NAME"; do
+for t in "$COPILOT_TARGET/skills/$SKILL_NAME" "$CLAUDE_TARGET/skills/$SKILL_NAME" \
+         "$GEMINI_TARGET/skills/$SKILL_NAME" "$PI_TARGET/skills/$SKILL_NAME"; do
   if [[ -L "$t" ]]; then
     resolved="$(readlink "$t")"
     log "Verified symlink: $t → $resolved"
