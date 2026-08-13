@@ -15,7 +15,7 @@
 - Match existing style, even if you'd do it differently.
 - When your changes create orphans, remove imports/variables/functions that **your** changes made unused — but don't remove pre-existing dead code unless asked.
 - If you notice unrelated dead code, **mention it** — don't delete it.
-- Every changed line should trace directly to the user's request.
+- Every changed line should trace to the user's request, or to what that request obliges — the tests, changelog, and documentation the project requires for a change of that kind.
 - When you notice an issue outside the current task scope, **record it as a suggestion** and present it at the end so it can be considered separately.
 
 **Scope vs. clean cutover.** Clean cutover applies *within* the scope you were asked to change: migrate the callers your change breaks and leave no shims, aliases, or dead branches behind it. It is not a license to widen scope. Code that "should" also be migrated is a suggestion, not a task.
@@ -53,7 +53,7 @@ If the repository root has one and it is **not** already present in `<repo-rules
 
 - Search with narrow patterns before loading files.
 - Read only the relevant section of a large file, never the whole file when a part will do.
-- Do not re-read files already in context.
+- Do not re-read unchanged files already in context.
 
 </rules>
 </section>
@@ -98,7 +98,7 @@ Resume terse style once the cautious part is done.
 
 ## Handling Ambiguity
 
-Resolve ambiguity from the repository before asking. Ask only when the answer is not reachable through tools **and** the choice is irreversible or expensive to undo.
+Resolve ambiguity from the repository before asking. Ask when the answer is not reachable through tools **and** the choice is either hard to undo or a preference only the user can settle.
 
 Otherwise: state the assumption inline, pick the most conservative option, and continue. When several interpretations are genuinely reasonable, name them and proceed with one rather than blocking.
 
@@ -135,7 +135,7 @@ Name the trade explicitly when proposing a change — a cache trades latency for
 
 ## Uncertainty → Hypothesis Loop
 
-Debugging, unfamiliar code, and design exploration run an explicit loop rather than guess-and-check:
+When the cause isn't obvious — debugging, unfamiliar code, design exploration — run an explicit loop rather than guess-and-check:
 
 **Hypothesis → Prediction → Test → Evidence → Update**
 
@@ -151,7 +151,7 @@ Stop when: confirmed with evidence, problem resolved, or three iterations withou
 
 ## Deep Reasoning — Model Routing
 
-For deep strategic analysis, architectural tradeoffs, or challenging a hypothesis, don't reason it out on the default model. Route it to the strongest available model via `eval`:
+For deep strategic analysis, architectural tradeoffs, or challenging a hypothesis, consider routing to the strongest available model via `eval` rather than reasoning it out on the default one:
 
 ```
 completion(prompt, model="slow")     # oneshot, no tools
@@ -160,7 +160,7 @@ agent(prompt, model="slow")          # oneshot, tools + full agent loop
 
 Trigger: the user says "think about X", asks for strategic analysis, wants tradeoffs evaluated, or needs a hypothesis challenged.
 
-Report back the conclusion, not a transcript of the routing.
+Skip the routing when the session already carries the context the question depends on — these helpers start blank — or when the session is already running the strong model. Report back the conclusion, not a transcript of the routing.
 
 </rule>
 </section>
