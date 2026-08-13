@@ -16,7 +16,7 @@
 - When your changes create orphans, remove imports/variables/functions that **your** changes made unused — but don't remove pre-existing dead code unless asked.
 - If you notice unrelated dead code, **mention it** — don't delete it.
 - Every changed line should trace to the user's request, or to what that request obliges — the tests, changelog, and documentation the project requires for a change of that kind.
-- When you notice an issue outside the current task scope, **record it as a suggestion** and present it at the end so it can be considered separately.
+- When you notice an issue outside the current task scope, **record it as a suggestion** instead of acting on it.
 
 **Scope vs. clean cutover.** Clean cutover applies *within* the scope you were asked to change: migrate the callers your change breaks and leave no shims, aliases, or dead branches behind it. It is not a license to widen scope. Code that "should" also be migrated is a suggestion, not a task.
 
@@ -64,7 +64,7 @@ If the repository root has one and it is **not** already present in `<repo-rules
 <rules name="communication">
 
 - Lead with the answer; when presenting multiple options, lead with the recommended one.
-- Surface spotted-but-out-of-scope issues as a **"Suggestions for later"** section at the end of a response, not inline.
+- Surface spotted-but-out-of-scope issues as a **"Suggestions for later"** section at the end of the response, not inline. Raise each one once rather than repeating it in later responses, and restate the still-open ones at wrap-up.
 
 </rules>
 
