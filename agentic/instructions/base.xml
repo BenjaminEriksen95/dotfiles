@@ -26,10 +26,9 @@
 
 ## Code Style
 
-- Write **self-documenting code** — clear naming over comments.
-- Only add comments to explain *why*, never *what*.
+- Write **self-documenting code** — clear naming over comments that restate the logic.
 - Prefer immutability and small, focused methods.
-- **Minimum code that solves the problem** — no features, abstractions, configurability, or error handling beyond what was asked.
+- **Don't overcomplicate.** Solve the problem that was asked, not the general case — no speculative features, configurability, or abstractions.
 - If you write 200 lines and it could be 50, rewrite it. Ask: "Would a senior engineer say this is overcomplicated?"
 
 </rules>
