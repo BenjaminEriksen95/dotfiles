@@ -34,18 +34,6 @@
 </rules>
 </section>
 
-  <section name="project-conventions" platform="omp">
-<rule name="project-specific-conventions">
-
-## Project Conventions
-
-`.github/copilot-instructions.md` is only auto-loaded when it sits in the directory the session started in. Starting a session in a subdirectory of a repository silently skips it.
-
-If the repository root has one and it is **not** already present in `<repo-rules>`, read it once at session start. Treat it as the source of truth for frameworks, DI patterns, architecture, and tooling — it overrides these instructions.
-
-</rule>
-</section>
-
   <section name="context-economy" platform="omp">
 <rules name="context-economy">
 
